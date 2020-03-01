@@ -2,6 +2,7 @@
 
 namespace Rockbuzz\LaraPricing\Traits;
 
+use LogicException;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Rockbuzz\LaraPricing\Models\{Feature, Subscription};
 
@@ -47,6 +48,9 @@ trait Subscribable
         return '0';
     }
 
+    /**
+     * @inheritDoc
+     */
     public function incrementUse(string $featureSlug, int $uses = 1): void
     {
         $feature = Feature::whereSlug($featureSlug)->firstOrFail();
@@ -58,17 +62,12 @@ trait Subscribable
         $usage = $subscription->usages()->where('feature_id', $feature->id)->first();
 
         if (!$usage) {
-            //if subscription creation > or = to feature
-            if ($subscription->created_at->gte($feature->created_at)) {
-                throw new \LogicException(
-                    'Subscription creation date must be greater than or equal to the functionality'
-                );
-            }
-            $before = '0';
+            $this->isANewFeatureOrLogicException($subscription, $feature);
             $usage = $subscription->usages()->create([
                 'used' => $uses,
                 'feature_id' => $feature->id
             ]);
+            $before = '0';
         } else {
             $before = $usage->used;
             $usage->update(['used' => $usage->used + $uses]);
@@ -85,6 +84,9 @@ trait Subscribable
         ]);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function decrementUse(string $featureSlug, int $uses = 1): void
     {
         $feature = Feature::whereSlug($featureSlug)->firstOrFail();
@@ -97,7 +99,7 @@ trait Subscribable
 
         $newUsed = $usage->used - $uses;
 
-        $used = (int)($newUsed) < 0 ? '0' : $newUsed;
+        $used = (int)($newUsed) < 0 ? '1' : $newUsed;
 
         $before = $usage->used;
 
@@ -159,5 +161,29 @@ trait Subscribable
         }
 
         return false;
+    }
+
+    public function removeUse(string $featureSlug)
+    {
+        $feature = Feature::whereSlug($featureSlug)->first();
+
+        if ($feature) {
+            $this->currentSubscription()->usages()->where('feature_id', $feature->id)->delete();
+        }
+    }
+
+    /**
+     * @param Subscription $subscription
+     * @param Feature $feature
+     * @throws LogicException
+     */
+    protected function isANewFeatureOrLogicException($subscription, $feature): void
+    {
+        //if subscription creation > or = to feature
+        if ($subscription->created_at->gte($feature->created_at)) {
+            throw new LogicException(
+                'Subscription creation date must be greater than or equal to the functionality'
+            );
+        }
     }
 }

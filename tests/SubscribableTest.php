@@ -324,7 +324,7 @@ class SubscribableTest extends TestCase
         $subscribable->decrementUse($feature->slug, 5);
 
         $this->assertDatabaseHas('subscription_usages', [
-            'used' => '0',
+            'used' => '1',
             'feature_id' => $feature->id,
             'subscription_id' => $subscription->id
         ]);
@@ -345,7 +345,7 @@ class SubscribableTest extends TestCase
             'description' => "decremented 5 Users",
             'changes' => json_encode([
                 'before' => '4',
-                'after' => '0'
+                'after' => '1'
             ]),
             'causeable_id' => $user->id,
             'causeable_type' => User::class
@@ -366,7 +366,7 @@ class SubscribableTest extends TestCase
 
         $this->assertEquals(0, $subscribable->consumedUse($feature->slug));
 
-        $usage = $subscription->usages()->create([
+        $subscription->usages()->create([
             'feature_id' => $feature->id,
             'used' => '9'
         ]);
@@ -471,5 +471,40 @@ class SubscribableTest extends TestCase
         $usage->update(['used' => '9']);
 
         $this->assertTrue($subscribable->canUse('users'));
+    }
+
+    public function testSubscribableRemoveUse()
+    {
+        $subscribable = $this->create(Workspace::class);
+        $plan = $this->create(Plan::class);
+        $feature = $this->create(Feature::class);
+
+        $subscription = $this->create(Subscription::class, [
+            'plan_id' => $plan->id,
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Workspace::class,
+        ]);
+
+        \DB::table('feature_plan')->insert([
+            'feature_id' => $feature->id,
+            'plan_id' => $plan->id,
+            'value' => '10'
+        ]);
+
+        $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
+        $plan->features()->attach([$feature->id => ['value' => '10']]);
+
+        $this->assertCount(0, $subscription->usages);
+
+        $subscription->usages()->create([
+            'feature_id' => $feature->id,
+            'used' => '10'
+        ]);
+
+        $this->assertCount(1, $subscription->fresh()->usages);
+
+        $subscribable->removeUse($feature->slug);
+
+        $this->assertCount(0, $subscription->fresh()->usages);
     }
 }

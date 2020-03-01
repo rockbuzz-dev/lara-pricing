@@ -2,6 +2,8 @@
 
 namespace Rockbuzz\LaraPricing\Contracts;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use LogicException;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 interface Subscribable
@@ -12,8 +14,18 @@ interface Subscribable
 
     public function featureValue(string $featureSlug): string;
 
+    /**
+     * @param string $featureSlug
+     * @param int $uses
+     * @throws LogicException Subscription creation date must be greater than or equal to the functionality
+     */
     public function incrementUse(string $featureSlug, int $uses = 1): void;
 
+    /**
+     * @param string $featureSlug
+     * @param int $uses
+     * @throws ModelNotFoundException if subscription, feature or usage does not exist
+     */
     public function decrementUse(string $featureSlug, int $uses = 1): void;
 
     public function consumedUse(string $featureSlug): int;
