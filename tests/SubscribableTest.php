@@ -2,12 +2,10 @@
 
 namespace Tests;
 
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Rockbuzz\LaraPricing\Traits\Subscribable;
-use Tests\Models\User;
-use Tests\Models\Workspace;
+use Tests\Models\{User, Workspace};
 use Rockbuzz\LaraPricing\Enums\PlanFeatureValue;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Rockbuzz\LaraPricing\Models\{Feature, Plan, Subscription, SubscriptionUsage};
 
 class SubscribableTest extends TestCase
@@ -99,6 +97,7 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableIncrementUseWithoutFeature()
     {
+        /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
         $subscribable = $this->create(Workspace::class);
 
         $this->expectException(ModelNotFoundException::class);
@@ -108,6 +107,7 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableIncrementUseWithoutFeatureInPlan()
     {
+        /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
         $subscribable = $this->create(Workspace::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
@@ -183,8 +183,15 @@ class SubscribableTest extends TestCase
             'subscription_id' => $subscription->id
         ]);
 
+        $usage = $subscription->usages()->where('feature_id', $feature->id)->first();
+
+        $this->assertCount(1, $usage->activities);
         $this->assertDatabaseHas('pricing_activities', [
-            'description' => Subscribable::class . '::incrementUse',
+            'description' => "incremented 1 Users",
+            'changes' => json_encode([
+                'before' => '0',
+                'after' => '1'
+            ]),
             'causeable_id' => $user->id,
             'causeable_type' => User::class
         ]);
@@ -224,8 +231,15 @@ class SubscribableTest extends TestCase
             'subscription_id' => $subscription->id
         ]);
 
+        $usage = SubscriptionUsage::findOrFail($usageId);
+
+        $this->assertCount(1, $usage->activities);
         $this->assertDatabaseHas('pricing_activities', [
-            'description' => Subscribable::class . '::incrementUse',
+            'description' => "incremented 1 Users",
+            'changes' => json_encode([
+                'before' => '5',
+                'after' => '6'
+            ]),
             'causeable_id' => $user->id,
             'causeable_type' => User::class
         ]);
@@ -233,6 +247,7 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableDecrementUseWithoutFeature()
     {
+        /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
         $subscribable = $this->create(Workspace::class);
 
         $this->expectException(ModelNotFoundException::class);
@@ -242,6 +257,7 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableDecrementUseWithoutFeatureInPlan()
     {
+        /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
         $subscribable = $this->create(Workspace::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
@@ -258,6 +274,7 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableDecrementUseWithoutFeatureUsage()
     {
+        /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
         $subscribable = $this->create(Workspace::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
@@ -293,6 +310,9 @@ class SubscribableTest extends TestCase
             'subscription_id' => $subscription->id,
         ]);
 
+        $user = $this->create(User::class);
+        $this->signIn([], $user);
+
         $subscribable->decrementUse($feature->slug);
 
         $this->assertDatabaseHas('subscription_usages', [
@@ -307,6 +327,28 @@ class SubscribableTest extends TestCase
             'used' => '0',
             'feature_id' => $feature->id,
             'subscription_id' => $subscription->id
+        ]);
+
+        $usage = SubscriptionUsage::findOrFail($usageId);
+
+        $this->assertCount(2, $usage->activities);
+        $this->assertDatabaseHas('pricing_activities', [
+            'description' => "decremented 1 Users",
+            'changes' => json_encode([
+                'before' => '5',
+                'after' => '4'
+            ]),
+            'causeable_id' => $user->id,
+            'causeable_type' => User::class
+        ]);
+        $this->assertDatabaseHas('pricing_activities', [
+            'description' => "decremented 5 Users",
+            'changes' => json_encode([
+                'before' => '4',
+                'after' => '0'
+            ]),
+            'causeable_id' => $user->id,
+            'causeable_type' => User::class
         ]);
     }
 

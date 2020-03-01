@@ -24,7 +24,11 @@ class Plan extends Model
     ];
 
     protected $casts = [
-        'id' => 'string'
+        'id' => 'string',
+        'price' => 'integer',
+        'period' => 'integer',
+        'trial_period_days' => 'integer',
+        'sort_order' => 'integer'
     ];
 
     protected $dates = [

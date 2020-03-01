@@ -117,4 +117,14 @@ class Subscription extends Model
     {
         return is_null($this->finish_at);
     }
+
+    public function hasTrial()
+    {
+        return $this->plan->fresh()->trial_period_days > 0;
+    }
+
+    public function trial()
+    {
+        return $this->plan->fresh()->trial_period_days;
+    }
 }

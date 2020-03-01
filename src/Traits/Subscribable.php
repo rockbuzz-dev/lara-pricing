@@ -2,8 +2,8 @@
 
 namespace Rockbuzz\LaraPricing\Traits;
 
-use Rockbuzz\LaraPricing\Models\{Feature, Subscription};
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Rockbuzz\LaraPricing\Models\{Feature, Subscription};
 
 trait Subscribable
 {
@@ -64,18 +64,24 @@ trait Subscribable
                     'Subscription creation date must be greater than or equal to the functionality'
                 );
             }
+            $before = '0';
             $usage = $subscription->usages()->create([
                 'used' => $uses,
                 'feature_id' => $feature->id
             ]);
         } else {
+            $before = $usage->used;
             $usage->update(['used' => $usage->used + $uses]);
         }
 
         $usage->activities()->create([
-            'description' => __METHOD__,
+            'description' => "incremented {$uses} {$feature->name}",
+            'changes' => [
+                'before' => $before,
+                'after' => $usage->fresh()->used
+            ],
             'causeable_id' => auth()->user()->id,
-            'causeable_type' => get_class(auth()->user()),
+            'causeable_type' => get_class(auth()->user())
         ]);
     }
 
@@ -93,7 +99,19 @@ trait Subscribable
 
         $used = (int)($newUsed) < 0 ? '0' : $newUsed;
 
+        $before = $usage->used;
+
         $usage->update(['used' => $used]);
+
+        $usage->activities()->create([
+            'description' => "decremented {$uses} {$feature->name}",
+            'changes' => [
+                'before' => $before,
+                'after' => $usage->fresh()->used
+            ],
+            'causeable_id' => auth()->user()->id,
+            'causeable_type' => get_class(auth()->user())
+        ]);
     }
 
     public function consumedUse(string $featureSlug): int

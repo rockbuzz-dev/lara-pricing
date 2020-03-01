@@ -16,7 +16,8 @@ class SubscriptionUsage extends Model
     protected $fillable = [
         'used',
         'subscription_id',
-        'feature_id'
+        'feature_id',
+        'metadata'
     ];
 
     protected $casts = [

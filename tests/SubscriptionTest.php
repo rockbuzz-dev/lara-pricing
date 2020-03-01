@@ -152,6 +152,7 @@ class SubscriptionTest extends TestCase
     public function testSubscriptionFinish()
     {
         Event::fake([SubscriptionFinished::class]);
+
         $subscription = $this->create(Subscription::class, [
             'finish_at' => null
         ]);
@@ -174,6 +175,7 @@ class SubscriptionTest extends TestCase
     public function testSubscriptionCancel()
     {
         Event::fake([SubscriptionCanceled::class]);
+
         $subscription = $this->create(Subscription::class, [
             'canceled_at' => null
         ]);
@@ -195,9 +197,6 @@ class SubscriptionTest extends TestCase
     public function testSubscriptionRecurrent()
     {
         Event::fake([SubscriptionMakeRecurring::class]);
-        $subscription = $this->create(Subscription::class, [
-            'canceled_at' => null
-        ]);
 
         $subscription = $this->create(Subscription::class, [
             'start_at' => now()->subMonth(),
@@ -214,6 +213,30 @@ class SubscriptionTest extends TestCase
         Event::assertDispatched(SubscriptionMakeRecurring::class, function ($e) use ($subscription) {
             return $e->subscription->id === $subscription->id;
         });
+    }
+
+    public function testSubscriptionHasTrial()
+    {
+        $plan = $this->create(Plan::class, ['trial_period_days' => 0]);
+        $subscription = $this->create(Subscription::class, [
+            'plan_id' => $plan->id
+        ]);
+
+        $this->assertFalse($subscription->hasTrial());
+
+        $plan->update(['trial_period_days' => 1]);
+
+        $this->assertTrue($subscription->hasTrial());
+    }
+
+    public function testSubscriptionTrial()
+    {
+        $plan = $this->create(Plan::class, ['trial_period_days' => 15]);
+        $subscription = $this->create(Subscription::class, [
+            'plan_id' => $plan->id
+        ]);
+
+        $this->assertEquals(15, $subscription->trial());
     }
 
     public function testSubscriptionActive()

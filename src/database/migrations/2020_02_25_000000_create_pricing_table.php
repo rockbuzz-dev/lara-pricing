@@ -81,6 +81,7 @@ class CreatePricingTable extends Migration
                 ->references('id')
                 ->on('subscriptions')
                 ->onDelete('cascade');
+            $table->json('metadata')->nullable();
             $table->timestamps();
             $table->softDeletes();
             $table->unique(['feature_id', 'subscription_id']);

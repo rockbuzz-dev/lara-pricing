@@ -2,13 +2,11 @@
 
 namespace Tests\Unit;
 
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Rockbuzz\LaraPricing\Models\PricingActivity;
-use Rockbuzz\LaraPricing\Models\Subscription;
 use Tests\TestCase;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Rockbuzz\LaraPricing\Models\SubscriptionUsage;
 use Rockbuzz\LaraPricing\Traits\{Uuid, Activityable};
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Rockbuzz\LaraPricing\Models\{SubscriptionUsage, PricingActivity};
 
 class SubscriptionUsageTest extends TestCase
 {
@@ -50,7 +48,8 @@ class SubscriptionUsageTest extends TestCase
         $expected = [
             'used',
             'subscription_id',
-            'feature_id'
+            'feature_id',
+            'metadata'
         ];
 
         $this->assertEquals($expected, $this->signature->getFillable());

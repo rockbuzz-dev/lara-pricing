@@ -60,7 +60,13 @@ class PlanTest extends TestCase
 
     public function testCasts()
     {
-        $expected = ['id' => 'string'];
+        $expected = [
+            'id' => 'string',
+            'price' => 'integer',
+            'period' => 'integer',
+            'trial_period_days' => 'integer',
+            'sort_order' => 'integer'
+        ];
 
         $this->assertEquals($expected, $this->plan->getCasts());
     }
