@@ -55,6 +55,7 @@ class SubscriptionTest extends TestCase
             'start_at',
             'finish_at',
             'canceled_at',
+            'due_date',
             'subscribable_id',
             'subscribable_type',
             'plan_id'
@@ -66,7 +67,8 @@ class SubscriptionTest extends TestCase
     public function testCasts()
     {
         $expected = [
-            'id' => 'string'
+            'id' => 'string',
+            'due_date' => 'date'
         ];
 
         $this->assertEquals($expected, $this->subscription->getCasts());

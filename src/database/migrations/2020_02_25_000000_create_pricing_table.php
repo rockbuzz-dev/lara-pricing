@@ -56,6 +56,7 @@ class CreatePricingTable extends Migration
             $table->dateTime('start_at')->useCurrent();
             $table->dateTime('finish_at')->nullable();
             $table->dateTime('canceled_at')->nullable();
+            $table->date('due_date')->useCurrent();
             $table->uuid('subscribable_id');
             $table->string('subscribable_type');
             $table->uuid('plan_id')->index();
@@ -86,6 +87,35 @@ class CreatePricingTable extends Migration
             $table->softDeletes();
             $table->unique(['feature_id', 'subscription_id']);
             $table->index(['feature_id', 'subscription_id']);
+        });
+
+        Schema::create('invoices', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->smallInteger('price');
+            $table->date('due_date');
+            $table->uuid('subscription_id')->index();
+            $table->foreign('subscription_id')
+                ->references('id')
+                ->on('subscriptions')
+                ->onDelete('cascade');
+            $table->timestamps();
+            $table->softDeletes();
+            $table->index(['due_date', 'subscription_id']);
+        });
+
+        Schema::create('invoice_items', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('name');
+            $table->string('description');
+            $table->smallInteger('unit_price');
+            $table->smallInteger('quantity');
+            $table->uuid('invoice_id')->index();
+            $table->foreign('invoice_id')
+                ->references('id')
+                ->on('invoices')
+                ->onDelete('cascade');
+            $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('pricing_activities', function (Blueprint $table) {

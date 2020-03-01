@@ -23,13 +23,15 @@ class Subscription extends Model
         'start_at',
         'finish_at',
         'canceled_at',
+        'due_date',
         'subscribable_id',
         'subscribable_type',
         'plan_id'
     ];
 
     protected $casts = [
-        'id' => 'string'
+        'id' => 'string',
+        'due_date' => 'date'
     ];
 
     protected $dates = [
