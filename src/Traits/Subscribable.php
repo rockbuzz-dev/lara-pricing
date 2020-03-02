@@ -15,9 +15,7 @@ trait Subscribable
 
     public function currentSubscription()
     {
-        return $this->subscriptions()->latest()->get()->reject(function ($subscription) {
-            return $subscription->isInactive();
-        })->first();
+        return $this->subscriptions()->latest()->firstOrFail();
     }
 
     public function featureEnabled(string $featureSlug): bool
@@ -53,9 +51,11 @@ trait Subscribable
      */
     public function incrementUse(string $featureSlug, int $uses = 1): void
     {
-        $feature = PricingFeature::whereSlug($featureSlug)->firstOrFail();
-
         $subscription = $this->currentSubscription();
+
+        $this->ifActiveSubscriptionOrLogicException($subscription);
+
+        $feature = PricingFeature::whereSlug($featureSlug)->firstOrFail();
 
         $subscription->plan->features()->where('feature_id', $feature->id)->firstOrFail();
 
@@ -89,9 +89,11 @@ trait Subscribable
      */
     public function decrementUse(string $featureSlug, int $uses = 1): void
     {
-        $feature = PricingFeature::whereSlug($featureSlug)->firstOrFail();
-
         $subscription = $this->currentSubscription();
+
+        $this->ifActiveSubscriptionOrLogicException($subscription);
+
+        $feature = PricingFeature::whereSlug($featureSlug)->firstOrFail();
 
         $subscription->plan->features()->where('feature_id', $feature->id)->firstOrFail();
 
@@ -122,6 +124,8 @@ trait Subscribable
 
         if ($feature) {
             $subscription = $this->currentSubscription();
+
+            $this->ifActiveSubscriptionOrLogicException($subscription);
 
             if (!$subscription->relationLoaded('usages')) {
                 $subscription->usages()->getEager();
@@ -168,7 +172,11 @@ trait Subscribable
         $feature = PricingFeature::whereSlug($featureSlug)->first();
 
         if ($feature) {
-            $this->currentSubscription()->usages()->where('feature_id', $feature->id)->delete();
+            $subscription = $this->currentSubscription();
+
+            $this->ifActiveSubscriptionOrLogicException($subscription);
+
+            $subscription->usages()->where('feature_id', $feature->id)->delete();
         }
     }
 
@@ -177,13 +185,27 @@ trait Subscribable
      * @param PricingFeature $feature
      * @throws LogicException
      */
-    protected function isANewFeatureOrLogicException($subscription, $feature): void
+    protected function isANewFeatureOrLogicException(
+        PricingSubscription $subscription,
+        PricingFeature $feature
+    ): void
     {
         //if subscription creation > or = to feature
         if ($subscription->created_at->gte($feature->created_at)) {
             throw new LogicException(
                 'Subscription creation date must be greater than or equal to the functionality'
             );
+        }
+    }
+
+    /**
+     * @param PricingSubscription $subscription
+     * @throws LogicException
+     */
+    protected function ifActiveSubscriptionOrLogicException(PricingSubscription $subscription): void
+    {
+        if ($subscription->isInactive()) {
+            throw new \LogicException('You cannot perform this action with an inactive subscription');
         }
     }
 }

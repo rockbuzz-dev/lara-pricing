@@ -43,14 +43,22 @@ class SubscribableTest extends TestCase
         $subscription = $this->create(PricingSubscription::class, [
             'created_at' => now(),
             'start_at' => now()->subSecond(),
-            'finish_at' => null,
-            'canceled_at' => null,
+            'finish_at' => now()->subSecond(),
+            'canceled_at' => now()->subSecond(),
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
             'subscribable_type' => Workspace::class,
         ]);
 
         $this->assertEquals($subscription->id, $subscribable->currentSubscription()->id);
+
+        PricingSubscription::all()->each(function ($subscription) {
+            $subscription->delete();
+        });
+
+        $this->expectException(ModelNotFoundException::class);
+
+        $subscribable->currentSubscription();
     }
 
     public function testSubscribableFeatureEnabled()
@@ -93,6 +101,24 @@ class SubscribableTest extends TestCase
         ]);
 
         $this->assertEquals('10', $subscribable->featureValue($feature->slug));
+    }
+
+    public function testSubscribableIncrementUseWithInactiveSubscription()
+    {
+        /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
+        /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
+        $subscribable = $this->create(Workspace::class);
+
+        $this->create(PricingSubscription::class, [
+            'canceled_at' => now()->subSecond(),
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Workspace::class,
+        ]);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('You cannot perform this action with an inactive subscription');
+
+        $subscribable->incrementUse('not-exists');
     }
 
     public function testSubscribableIncrementUseWithoutFeature()
@@ -245,6 +271,22 @@ class SubscribableTest extends TestCase
         ]);
     }
 
+    public function testSubscribableDecrementUseWithInactiveSubscription()
+    {
+        /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
+        $subscribable = $this->create(Workspace::class);
+        $this->create(PricingSubscription::class, [
+            'canceled_at' => now()->subSecond(),
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Workspace::class,
+        ]);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('You cannot perform this action with an inactive subscription');
+
+        $subscribable->decrementUse('users');
+    }
+
     public function testSubscribableDecrementUseWithoutFeature()
     {
         /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
@@ -352,6 +394,22 @@ class SubscribableTest extends TestCase
         ]);
     }
 
+    public function testSubscribableConsumedUseWithInactiveSubscription()
+    {
+        $subscribable = $this->create(Workspace::class);
+        $this->create(PricingSubscription::class, [
+            'finish_at' => now()->subSecond(),
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Workspace::class,
+        ]);
+        $feature = $this->create(PricingFeature::class, ['name' => 'Users', 'slug' => 'users']);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('You cannot perform this action with an inactive subscription');
+
+        $subscribable->consumedUse($feature->slug);
+    }
+
     public function testSubscribableConsumedUse()
     {
         $subscribable = $this->create(Workspace::class);
@@ -376,6 +434,25 @@ class SubscribableTest extends TestCase
         $feature->delete();
 
         $this->assertEquals(0, $subscribable->consumedUse($feature->slug));
+    }
+
+    public function testSubscribableRemainingUseWithInactiveSubscription()
+    {
+        $subscribable = $this->create(Workspace::class);
+        $plan = $this->create(PricingPlan::class);
+        $this->create(PricingSubscription::class, [
+            'plan_id' => $plan->id,
+            'finish_at' => now()->subSecond(),
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Workspace::class,
+        ]);
+        $feature = $this->create(PricingFeature::class, ['name' => 'Users', 'slug' => 'users']);
+        $plan->features()->attach([$feature->id => ['value' => '10']]);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('You cannot perform this action with an inactive subscription');
+
+        $subscribable->remainingUse($feature->slug);
     }
 
     public function testSubscribableRemainingUse()
@@ -473,6 +550,26 @@ class SubscribableTest extends TestCase
         $this->assertTrue($subscribable->canUse('users'));
     }
 
+    public function testSubscribableCanUseWithInactiveSubscription()
+    {
+        $subscribable = $this->create(Workspace::class);
+        $plan = $this->create(PricingPlan::class);
+        $this->create(PricingSubscription::class, [
+            'finish_at' => now()->subSecond(),
+            'plan_id' => $plan->id,
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Workspace::class,
+        ]);
+
+        $feature = $this->create(PricingFeature::class, ['name' => 'Users', 'slug' => 'users']);
+        $plan->features()->attach([$feature->id => ['value' => '10']]);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('You cannot perform this action with an inactive subscription');
+
+        $subscribable->canUse($feature->slug);
+    }
+
     public function testSubscribableRemoveUse()
     {
         $subscribable = $this->create(Workspace::class);
@@ -506,5 +603,33 @@ class SubscribableTest extends TestCase
         $subscribable->removeUse($feature->slug);
 
         $this->assertCount(0, $subscription->fresh()->usages);
+    }
+
+    public function testSubscribableRemoveUseWithInactiveSubscription()
+    {
+        $subscribable = $this->create(Workspace::class);
+        $plan = $this->create(PricingPlan::class);
+        $feature = $this->create(PricingFeature::class);
+
+        $subscription = $this->create(PricingSubscription::class, [
+            'finish_at' => now()->subSecond(),
+            'plan_id' => $plan->id,
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Workspace::class,
+        ]);
+
+        \DB::table(config('pricing.tables.pricing_feature_plan'))->insert([
+            'feature_id' => $feature->id,
+            'plan_id' => $plan->id,
+            'value' => '10'
+        ]);
+
+        $feature = $this->create(PricingFeature::class, ['name' => 'Users', 'slug' => 'users']);
+        $plan->features()->attach([$feature->id => ['value' => '10']]);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('You cannot perform this action with an inactive subscription');
+
+        $subscribable->removeUse($feature->slug);
     }
 }
