@@ -2,6 +2,8 @@
 
 Pricing management
 
+[![Build Status](https://travis-ci.org/rockbuzz/lara-pricing.svg?branch=master)](https://travis-ci.org/rockbuzz/lara-pricing)
+
 Under development
 
 ## License
