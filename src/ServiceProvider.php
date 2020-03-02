@@ -14,10 +14,10 @@ class ServiceProvider extends SupportServiceProvider
             DIRECTORY_SEPARATOR;
 
         if (! $this->hasMigrationInProject($projectPath, $filesystem)) {
-            $this->loadMigrationsFrom($localPath . '2020_02_15_000000_create_pricing_tables.php');
+            $this->loadMigrationsFrom($localPath . '2020_03_01_000000_create_pricing_tables.php');
 
             $this->publishes([
-                $localPath . '2020_02_15_000000_create_pricing_tables.php' =>
+                $localPath . '2020_03_01_000000_create_pricing_tables.php' =>
                     $projectPath . now()->format('Y_m_d_his') . '_create_pricing_tables.php'
             ], 'migrations');
         }
