@@ -2,12 +2,12 @@
 
 namespace Tests\Models;
 
-use Rockbuzz\LaraPricing\Traits\Uuid;
 use Tests\TestCase;
-use Rockbuzz\LaraPricing\Models\Feature;
+use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Rockbuzz\LaraPricing\Models\PricingFeature;
 
-class FeatureTest extends TestCase
+class PricingFeatureTest extends TestCase
 {
     protected $feature;
 
@@ -15,7 +15,7 @@ class FeatureTest extends TestCase
     {
         parent::setUp();
 
-        $this->feature = new Feature();
+        $this->feature = new PricingFeature();
     }
 
     public function testIfUsesTraits()
@@ -27,7 +27,7 @@ class FeatureTest extends TestCase
 
         $this->assertEquals(
             $expected,
-            array_values(class_uses(Feature::class))
+            array_values(class_uses(PricingFeature::class))
         );
     }
 
@@ -69,7 +69,7 @@ class FeatureTest extends TestCase
 
     public function testFeatureSetNameAttribute()
     {
-        $feature = Feature::create(['name' => 'Max Users']);
+        $feature = PricingFeature::create(['name' => 'Max Users']);
 
         $this->assertEquals('max-users', $feature->slug);
     }

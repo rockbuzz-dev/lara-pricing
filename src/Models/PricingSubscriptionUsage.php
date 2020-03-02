@@ -2,25 +2,27 @@
 
 namespace Rockbuzz\LaraPricing\Models;
 
-use Rockbuzz\LaraPricing\Traits\Uuid;
+use Rockbuzz\LaraPricing\Traits\{Activityable, Uuid};
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
-class Feature extends Model
+class PricingSubscriptionUsage extends Model
 {
-    use Uuid, SoftDeletes;
+    use Uuid, SoftDeletes, Activityable;
 
     public $incrementing = false;
 
     protected $keyType = 'string';
 
     protected $fillable = [
-        'name',
-        'slug',
-        'sort_order'
+        'used',
+        'subscription_id',
+        'feature_id',
+        'metadata'
     ];
 
     protected $casts = [
-        'id' => 'string'
+        'id' => 'string',
+        'metadata' => 'array'
     ];
 
     protected $dates = [
@@ -28,10 +30,4 @@ class Feature extends Model
         'created_at',
         'updated_at'
     ];
-
-    public function setNameAttribute(string $name): void
-    {
-        $this->attributes['name'] = $name;
-        $this->attributes['slug'] = \Str::slug($name);
-    }
 }

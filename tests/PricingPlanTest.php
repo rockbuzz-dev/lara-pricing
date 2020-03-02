@@ -2,14 +2,13 @@
 
 namespace Tests;
 
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Rockbuzz\LaraPricing\Enums\PlanFeatureValue;
-use Rockbuzz\LaraPricing\Models\Feature;
 use Rockbuzz\LaraPricing\Traits\Uuid;
-use Rockbuzz\LaraPricing\Models\Plan;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Rockbuzz\LaraPricing\Enums\PlanFeatureValue;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Rockbuzz\LaraPricing\Models\{PricingPlan, PricingFeature};
 
-class PlanTest extends TestCase
+class PricingPlanTest extends TestCase
 {
     protected $plan;
 
@@ -17,7 +16,7 @@ class PlanTest extends TestCase
     {
         parent::setUp();
 
-        $this->plan = new Plan();
+        $this->plan = new PricingPlan();
     }
 
     public function testIfUsesTraits()
@@ -29,7 +28,7 @@ class PlanTest extends TestCase
 
         $this->assertEquals(
             $expected,
-            array_values(class_uses(Plan::class))
+            array_values(class_uses(PricingPlan::class))
         );
     }
 
@@ -81,10 +80,10 @@ class PlanTest extends TestCase
 
     public function testPlanCanHaveFeatures()
     {
-        $plan = $this->create(Plan::class);
-        $feature = $this->create(Feature::class);
+        $plan = $this->create(PricingPlan::class);
+        $feature = $this->create(PricingFeature::class);
 
-        \DB::table('feature_plan')->insert([
+        \DB::table(config('pricing.tables.pricing_feature_plan'))->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => PlanFeatureValue::POSITIVE
@@ -96,12 +95,12 @@ class PlanTest extends TestCase
 
     public function testPlanHasFeature()
     {
-        $plan = $this->create(Plan::class);
-        $feature = $this->create(Feature::class);
+        $plan = $this->create(PricingPlan::class);
+        $feature = $this->create(PricingFeature::class);
 
         $this->assertFalse($plan->hasFeature($feature->slug));
 
-        \DB::table('feature_plan')->insert([
+        \DB::table(config('pricing.tables.pricing_feature_plan'))->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => PlanFeatureValue::POSITIVE
@@ -112,19 +111,19 @@ class PlanTest extends TestCase
 
     public function testPlanScopeMonthly()
     {
-        $plan = $this->create(Plan::class, ['interval' => 'month', 'period' => 3]);
-        $monthlyPlan = $this->create(Plan::class, ['interval' => 'month', 'period' => 1]);
+        $plan = $this->create(PricingPlan::class, ['interval' => 'month', 'period' => 3]);
+        $monthlyPlan = $this->create(PricingPlan::class, ['interval' => 'month', 'period' => 1]);
 
-        $this->assertNotContains($plan->id, Plan::monthly()->get()->pluck('id'));
-        $this->assertContains($monthlyPlan->id, Plan::monthly()->get()->pluck('id'));
+        $this->assertNotContains($plan->id, PricingPlan::monthly()->get()->pluck('id'));
+        $this->assertContains($monthlyPlan->id, PricingPlan::monthly()->get()->pluck('id'));
     }
 
     public function testPlanScopeYearly()
     {
-        $plan = $this->create(Plan::class, ['interval' => 'month', 'period' => 3]);
-        $yearlyPlan = $this->create(Plan::class, ['interval' => 'month', 'period' => 12]);
+        $plan = $this->create(PricingPlan::class, ['interval' => 'month', 'period' => 3]);
+        $yearlyPlan = $this->create(PricingPlan::class, ['interval' => 'month', 'period' => 12]);
 
-        $this->assertNotContains($plan->id, Plan::yearly()->get()->pluck('id'));
-        $this->assertContains($yearlyPlan->id, Plan::yearly()->get()->pluck('id'));
+        $this->assertNotContains($plan->id, PricingPlan::yearly()->get()->pluck('id'));
+        $this->assertContains($yearlyPlan->id, PricingPlan::yearly()->get()->pluck('id'));
     }
 }

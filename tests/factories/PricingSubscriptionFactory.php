@@ -4,9 +4,9 @@
 
 use Tests\Models\Workspace;
 use Faker\Generator as Faker;
-use Rockbuzz\LaraPricing\Models\{Subscription, Plan};
+use Rockbuzz\LaraPricing\Models\{PricingSubscription, PricingPlan};
 
-$factory->define(Subscription::class, function (Faker $faker) {
+$factory->define(PricingSubscription::class, function (Faker $faker) {
     $workspace = factory(Workspace::class)->create();
     $startAt = $faker->dateTimeBetween();
     return [
@@ -17,6 +17,6 @@ $factory->define(Subscription::class, function (Faker $faker) {
         'due_date' => $startAt->format('Y-m-d'),
         'subscribable_id' => $workspace->id,
         'subscribable_type' => Workspace::class,
-        'plan_id' => factory(Plan::class)->create()
+        'plan_id' => factory(PricingPlan::class)->create()
     ];
 });

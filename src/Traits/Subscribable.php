@@ -4,13 +4,13 @@ namespace Rockbuzz\LaraPricing\Traits;
 
 use LogicException;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Rockbuzz\LaraPricing\Models\{Feature, Subscription};
+use Rockbuzz\LaraPricing\Models\{PricingFeature, PricingSubscription};
 
 trait Subscribable
 {
     public function subscriptions(): MorphMany
     {
-        return $this->morphMany(Subscription::class, 'subscribable');
+        return $this->morphMany(PricingSubscription::class, 'subscribable');
     }
 
     public function currentSubscription()
@@ -53,7 +53,7 @@ trait Subscribable
      */
     public function incrementUse(string $featureSlug, int $uses = 1): void
     {
-        $feature = Feature::whereSlug($featureSlug)->firstOrFail();
+        $feature = PricingFeature::whereSlug($featureSlug)->firstOrFail();
 
         $subscription = $this->currentSubscription();
 
@@ -89,7 +89,7 @@ trait Subscribable
      */
     public function decrementUse(string $featureSlug, int $uses = 1): void
     {
-        $feature = Feature::whereSlug($featureSlug)->firstOrFail();
+        $feature = PricingFeature::whereSlug($featureSlug)->firstOrFail();
 
         $subscription = $this->currentSubscription();
 
@@ -118,7 +118,7 @@ trait Subscribable
 
     public function consumedUse(string $featureSlug): int
     {
-        $feature = Feature::whereSlug($featureSlug)->first();
+        $feature = PricingFeature::whereSlug($featureSlug)->first();
 
         if ($feature) {
             $subscription = $this->currentSubscription();
@@ -144,7 +144,7 @@ trait Subscribable
 
     public function canUse(string $featureSlug): bool
     {
-        $feature = Feature::whereSlug($featureSlug)->first();
+        $feature = PricingFeature::whereSlug($featureSlug)->first();
 
         if ($feature) {
             if ($this->featureEnabled($feature->slug)) {
@@ -165,7 +165,7 @@ trait Subscribable
 
     public function removeUse(string $featureSlug)
     {
-        $feature = Feature::whereSlug($featureSlug)->first();
+        $feature = PricingFeature::whereSlug($featureSlug)->first();
 
         if ($feature) {
             $this->currentSubscription()->usages()->where('feature_id', $feature->id)->delete();
@@ -173,8 +173,8 @@ trait Subscribable
     }
 
     /**
-     * @param Subscription $subscription
-     * @param Feature $feature
+     * @param PricingSubscription $subscription
+     * @param PricingFeature $feature
      * @throws LogicException
      */
     protected function isANewFeatureOrLogicException($subscription, $feature): void

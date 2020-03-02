@@ -5,7 +5,7 @@ namespace Rockbuzz\LaraPricing\Models;
 use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
-class Plan extends Model
+class PricingPlan extends Model
 {
     use Uuid, SoftDeletes;
 
@@ -39,7 +39,7 @@ class Plan extends Model
 
     public function features()
     {
-        return $this->belongsToMany(Feature::class)
+        return $this->belongsToMany(PricingFeature::class, 'pricing_feature_plan', 'plan_id', 'feature_id')
             ->withPivot('value');
     }
 

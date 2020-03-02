@@ -2,9 +2,9 @@
 
 namespace Rockbuzz\LaraPricing\Contracts;
 
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use LogicException;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 interface Subscribable
 {

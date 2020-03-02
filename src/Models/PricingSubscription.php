@@ -10,7 +10,7 @@ use Rockbuzz\LaraPricing\Events\{SubscriptionCanceled,
     SubscriptionMakeRecurring,
     SubscriptionStarted};
 
-class Subscription extends Model
+class PricingSubscription extends Model
 {
     use Uuid, SoftDeletes;
 
@@ -50,12 +50,12 @@ class Subscription extends Model
 
     public function plan(): BelongsTo
     {
-        return $this->belongsTo(Plan::class);
+        return $this->belongsTo(PricingPlan::class, 'plan_id');
     }
 
     public function usages(): HasMany
     {
-        return $this->hasMany(SubscriptionUsage::class);
+        return $this->hasMany(PricingSubscriptionUsage::class, 'subscription_id');
     }
 
     public function start()

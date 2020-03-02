@@ -3,17 +3,17 @@
 namespace Tests;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Rockbuzz\LaraPricing\Models\{PricingActivity, SubscriptionUsage};
+use Rockbuzz\LaraPricing\Models\{PricingActivity, PricingSubscriptionUsage};
 
 class ActivityableTest extends TestCase
 {
     public function testSubscriptionUsageCanHaveActivities()
     {
-        $subscriptionUsage = $this->create(Subscriptionusage::class);
+        $subscriptionUsage = $this->create(PricingSubscriptionUsage::class);
 
         $activity = $this->create(PricingActivity::class, [
             'activityable_id' => $subscriptionUsage->id,
-            'activityable_type' => SubscriptionUsage::class
+            'activityable_type' => PricingSubscriptionUsage::class
         ]);
 
         $this->assertInstanceOf(MorphMany::class, $subscriptionUsage->activities());
