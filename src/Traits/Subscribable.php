@@ -18,6 +18,9 @@ trait Subscribable
         return $this->subscriptions()->latest()->firstOrFail();
     }
 
+    /**
+     * @inheritDoc
+     */
     public function featureEnabled(string $featureSlug): bool
     {
         $subscription = $this->currentSubscription();
@@ -29,6 +32,9 @@ trait Subscribable
         return in_array(strtoupper($this->featureValue($featureSlug)), config('pricing.positive_values'));
     }
 
+    /**
+     * @inheritDoc
+     */
     public function featureValue(string $featureSlug): string
     {
         $plan = $this->currentSubscription()->plan;
@@ -118,6 +124,9 @@ trait Subscribable
         ]);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function consumedUse(string $featureSlug): int
     {
         $feature = PricingFeature::whereSlug($featureSlug)->first();
@@ -141,11 +150,17 @@ trait Subscribable
         return 0;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function remainingUse(string $featureSlug): int
     {
         return (int)$this->featureValue($featureSlug) - $this->consumedUse($featureSlug);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function canUse(string $featureSlug): bool
     {
         $feature = PricingFeature::whereSlug($featureSlug)->first();
@@ -167,6 +182,9 @@ trait Subscribable
         return false;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function removeUse(string $featureSlug)
     {
         $feature = PricingFeature::whereSlug($featureSlug)->first();
