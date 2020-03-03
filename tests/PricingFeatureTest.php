@@ -3,7 +3,7 @@
 namespace Tests\Models;
 
 use Tests\TestCase;
-use Rockbuzz\LaraPricing\Traits\Uuid;
+use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Rockbuzz\LaraPricing\Models\PricingFeature;
 

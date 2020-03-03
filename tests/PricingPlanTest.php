@@ -2,7 +2,7 @@
 
 namespace Tests;
 
-use Rockbuzz\LaraPricing\Traits\Uuid;
+use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Rockbuzz\LaraPricing\Enums\PlanFeatureValue;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;

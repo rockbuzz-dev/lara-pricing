@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use Tests\TestCase;
 use Tests\Models\User;
-use Rockbuzz\LaraPricing\Traits\Uuid;
+use Rockbuzz\LaraUuid\Traits\Uuid;
 use Rockbuzz\LaraPricing\Models\PricingActivity;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 

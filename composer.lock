@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7991b0688cb953efcd0d5ed0eefd6790",
+    "content-hash": "6525895aa767807e46b98b258cb13b60",
     "packages": [
         {
             "name": "bensampo/laravel-enum",
@@ -1435,6 +1435,61 @@
                 "uuid"
             ],
             "time": "2020-02-21T04:36:14+00:00"
+        },
+        {
+            "name": "rockbuzz/lara-uuid",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/rockbuzz/lara-uuid.git",
+                "reference": "24e807ad2eddc3bc42b7f1d8de5b6484dbc72ecb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/rockbuzz/lara-uuid/zipball/24e807ad2eddc3bc42b7f1d8de5b6484dbc72ecb",
+                "reference": "24e807ad2eddc3bc42b7f1d8de5b6484dbc72ecb",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.3"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^4.0",
+                "squizlabs/php_codesniffer": "^3.5"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Rockbuzz\\LaraUuid\\ServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Rockbuzz\\LaraUuid\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "TiagoDevWeb",
+                    "email": "tiago.desenvolvedorweb@gmail.com"
+                },
+                {
+                    "name": "Paulo Henrique P. Scheuermann",
+                    "email": "paetzold44@gmail.com"
+                }
+            ],
+            "description": "Laravel Uuid",
+            "keywords": [
+                "laravel",
+                "uuid"
+            ],
+            "time": "2020-03-03T17:06:51+00:00"
         },
         {
             "name": "swiftmailer/swiftmailer",

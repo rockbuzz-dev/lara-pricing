@@ -2,7 +2,7 @@
 
 namespace Tests\Models;
 
-use Rockbuzz\LaraPricing\Traits\Uuid;
+use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\Model;
 use Rockbuzz\LaraPricing\Traits\Subscribable;
 use Rockbuzz\LaraPricing\Contracts\Subscribable as SubscribableContract;

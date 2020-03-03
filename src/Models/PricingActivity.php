@@ -2,7 +2,7 @@
 
 namespace Rockbuzz\LaraPricing\Models;
 
-use Rockbuzz\LaraPricing\Traits\Uuid;
+use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\Model;
 
 class PricingActivity extends Model

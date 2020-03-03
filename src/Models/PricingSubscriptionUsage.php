@@ -2,7 +2,8 @@
 
 namespace Rockbuzz\LaraPricing\Models;
 
-use Rockbuzz\LaraPricing\Traits\{Activityable, Uuid};
+use Rockbuzz\LaraUuid\Traits\Uuid;
+use Rockbuzz\LaraPricing\Traits\Activityable;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
 class PricingSubscriptionUsage extends Model

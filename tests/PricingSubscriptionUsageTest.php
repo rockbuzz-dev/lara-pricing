@@ -3,8 +3,9 @@
 namespace Tests\Unit;
 
 use Tests\TestCase;
+use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Rockbuzz\LaraPricing\Traits\{Uuid, Activityable};
+use Rockbuzz\LaraPricing\Traits\Activityable;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Rockbuzz\LaraPricing\Models\{PricingSubscriptionUsage, PricingActivity};
 

@@ -3,9 +3,9 @@
 namespace Tests\Unit;
 
 use Tests\TestCase;
+use Rockbuzz\LaraUuid\Traits\Uuid;
 use Tests\Models\{User, Workspace};
 use Illuminate\Support\Facades\Event;
-use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphTo};
 use Rockbuzz\LaraPricing\Models\{PricingPlan, PricingSubscriptionUsage, PricingSubscription};
