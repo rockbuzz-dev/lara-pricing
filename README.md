@@ -17,7 +17,7 @@ $ composer require rockbuzz/lara-pricing
 Publish migration and config files
 
 ```
-$ php artisan vendor:publish --provider="Rockbuzz\LaraRbac\ServiceProvider"
+$ php artisan vendor:publish --provider="Rockbuzz\LaraPricing\ServiceProvider"
 $ php artisan migrate
 ```
 
