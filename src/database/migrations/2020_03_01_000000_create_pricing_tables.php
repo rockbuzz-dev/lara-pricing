@@ -60,7 +60,7 @@ class CreatePricingTables extends Migration
             $table->dateTime('start_at')->useCurrent();
             $table->dateTime('finish_at')->nullable();
             $table->dateTime('canceled_at')->nullable();
-            $table->date('due_day')->useCurrent();
+            $table->string('due_day');
             $table->uuid('subscribable_id');
             $table->string('subscribable_type');
             $table->uuid('plan_id')->index();
