@@ -68,7 +68,7 @@ class CreatePricingTables extends Migration
                 ->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
-            $table->index(['subscribable_id', 'subscribable_type', 'plan_id']);
+            $table->index(['subscribable_id', 'subscribable_type', 'plan_id'], 'subscribable_plan');
         });
 
         Schema::create($tables['pricing_subscription_usages'], function (Blueprint $table) {
