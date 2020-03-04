@@ -5,6 +5,8 @@ namespace Rockbuzz\LaraPricing\Models;
 use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphTo};
+use Spatie\Sluggable\HasSlug;
+use Spatie\Sluggable\SlugOptions;
 use Rockbuzz\LaraPricing\Events\{SubscriptionCanceled,
     SubscriptionFinished,
     SubscriptionMakeRecurring,
@@ -12,7 +14,7 @@ use Rockbuzz\LaraPricing\Events\{SubscriptionCanceled,
 
 class PricingSubscription extends Model
 {
-    use Uuid, SoftDeletes;
+    use Uuid, SoftDeletes, HasSlug;
 
     public $incrementing = false;
 
@@ -20,10 +22,11 @@ class PricingSubscription extends Model
 
     protected $fillable = [
         'name',
+        'slug',
         'start_at',
         'finish_at',
         'canceled_at',
-        'due_date',
+        'due_day',
         'subscribable_id',
         'subscribable_type',
         'plan_id'
@@ -56,6 +59,13 @@ class PricingSubscription extends Model
     public function usages(): HasMany
     {
         return $this->hasMany(PricingSubscriptionUsage::class, 'subscription_id');
+    }
+
+    public function getSlugOptions(): SlugOptions
+    {
+        return SlugOptions::create()
+            ->generateSlugsFrom('name')
+            ->saveSlugsTo('slug');
     }
 
     public function start()

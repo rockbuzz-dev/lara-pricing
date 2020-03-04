@@ -7,14 +7,16 @@ use Faker\Generator as Faker;
 use Rockbuzz\LaraPricing\Models\{PricingSubscription, PricingPlan};
 
 $factory->define(PricingSubscription::class, function (Faker $faker) {
+    $name = $faker->unique()->word;
     $workspace = factory(Workspace::class)->create();
     $startAt = $faker->dateTimeBetween();
     return [
-        'name' => $faker->unique()->word,
+        'name' => $name,
+        'slug' => \Illuminate\Support\Str::slug($name),
         'start_at' => $startAt,
         'finish_at' => null,
         'canceled_at' => null,
-        'due_date' => $startAt->format('Y-m-d'),
+        'due_day' => $startAt->format('d'),
         'subscribable_id' => $workspace->id,
         'subscribable_type' => Workspace::class,
         'plan_id' => factory(PricingPlan::class)->create()

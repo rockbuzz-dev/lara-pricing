@@ -3,6 +3,7 @@
 namespace Tests\Models;
 
 use Tests\TestCase;
+use Spatie\Sluggable\HasSlug;
 use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Rockbuzz\LaraPricing\Models\PricingFeature;
@@ -22,7 +23,8 @@ class PricingFeatureTest extends TestCase
     {
         $expected = [
             Uuid::class,
-            SoftDeletes::class
+            SoftDeletes::class,
+            HasSlug::class
         ];
 
         $this->assertEquals(
@@ -67,9 +69,12 @@ class PricingFeatureTest extends TestCase
         );
     }
 
-    public function testFeatureSetNameAttribute()
+    public function testFeatureMustHaveSlug()
     {
-        $feature = PricingFeature::create(['name' => 'Max Users']);
+        $feature = $this->create(PricingFeature::class, [
+            'name' => 'Max Users',
+            'slug' => null
+        ]);
 
         $this->assertEquals('max-users', $feature->slug);
     }

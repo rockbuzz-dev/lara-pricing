@@ -4,10 +4,12 @@ namespace Rockbuzz\LaraPricing\Models;
 
 use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
+use Spatie\Sluggable\HasSlug;
+use Spatie\Sluggable\SlugOptions;
 
 class PricingFeature extends Model
 {
-    use Uuid, SoftDeletes;
+    use Uuid, SoftDeletes, HasSlug;
 
     public $incrementing = false;
 
@@ -29,9 +31,10 @@ class PricingFeature extends Model
         'updated_at'
     ];
 
-    public function setNameAttribute(string $name): void
+    public function getSlugOptions(): SlugOptions
     {
-        $this->attributes['name'] = $name;
-        $this->attributes['slug'] = \Str::slug($name);
+        return SlugOptions::create()
+            ->generateSlugsFrom('name')
+            ->saveSlugsTo('slug');
     }
 }

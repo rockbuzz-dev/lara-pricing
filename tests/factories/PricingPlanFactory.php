@@ -6,8 +6,10 @@ use Faker\Generator as Faker;
 use Rockbuzz\LaraPricing\Models\PricingPlan;
 
 $factory->define(PricingPlan::class, function (Faker $faker) {
+    $name = $faker->unique()->word;
     return [
-        'name' => $faker->unique()->word,
+        'name' => $name,
+        'slug' => \Illuminate\Support\Str::slug($name),
         'description' => $faker->paragraph,
         'price' => $faker->numberBetween(1990, 5990),
         'interval' => 'month',

@@ -18,6 +18,7 @@ class CreatePricingTables extends Migration
         Schema::create($tables['pricing_plans'], function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name')->unique();
+            $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->smallInteger('price')->default(0);
             $table->string('interval')->default('month');
@@ -55,10 +56,11 @@ class CreatePricingTables extends Migration
         Schema::create($tables['pricing_subscriptions'], function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name')->unique();
+            $table->string('slug')->unique();
             $table->dateTime('start_at')->useCurrent();
             $table->dateTime('finish_at')->nullable();
             $table->dateTime('canceled_at')->nullable();
-            $table->date('due_date')->useCurrent();
+            $table->date('due_day')->useCurrent();
             $table->uuid('subscribable_id');
             $table->string('subscribable_type');
             $table->uuid('plan_id')->index();

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use Spatie\Sluggable\HasSlug;
 use Tests\TestCase;
 use Rockbuzz\LaraUuid\Traits\Uuid;
 use Tests\Models\{User, Workspace};
@@ -29,7 +30,8 @@ class PricingSubscriptionTest extends TestCase
     {
         $expected = [
             Uuid::class,
-            SoftDeletes::class
+            SoftDeletes::class,
+            HasSlug::class
         ];
 
         $this->assertEquals(
@@ -52,10 +54,11 @@ class PricingSubscriptionTest extends TestCase
     {
         $expected = [
             'name',
+            'slug',
             'start_at',
             'finish_at',
             'canceled_at',
-            'due_date',
+            'due_day',
             'subscribable_id',
             'subscribable_type',
             'plan_id'
@@ -124,6 +127,16 @@ class PricingSubscriptionTest extends TestCase
 
         $this->assertInstanceOf(HasMany::class, $subscription->usages());
         $this->assertContains($usage->id, $subscription->usages->pluck('id'));
+    }
+
+    public function testPricingSubscriptionMustHaveSlug()
+    {
+        $subscription = $this->create(PricingSubscription::class, [
+            'name' => 'Subscription Name',
+            'slug' => null
+        ]);
+
+        $this->assertEquals('subscription-name', $subscription->slug);
     }
 
     public function testSubscriptionStart()

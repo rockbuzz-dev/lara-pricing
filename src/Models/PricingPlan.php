@@ -4,10 +4,12 @@ namespace Rockbuzz\LaraPricing\Models;
 
 use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
+use Spatie\Sluggable\HasSlug;
+use Spatie\Sluggable\SlugOptions;
 
 class PricingPlan extends Model
 {
-    use Uuid, SoftDeletes;
+    use Uuid, SoftDeletes, HasSlug;
 
     public $incrementing = false;
 
@@ -15,6 +17,7 @@ class PricingPlan extends Model
 
     protected $fillable = [
         'name',
+        'slug',
         'description',
         'price',
         'interval',
@@ -46,6 +49,13 @@ class PricingPlan extends Model
     public function hasFeature(string $featureSlug)
     {
         return $this->features()->where('slug', $featureSlug)->exists();
+    }
+
+    public function getSlugOptions(): SlugOptions
+    {
+        return SlugOptions::create()
+            ->generateSlugsFrom('name')
+            ->saveSlugsTo('slug');
     }
 
     public function scopeMonthly($query)

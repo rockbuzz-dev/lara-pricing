@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Rockbuzz\LaraPricing\Enums\PlanFeatureValue;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Rockbuzz\LaraPricing\Models\{PricingPlan, PricingFeature};
+use Spatie\Sluggable\HasSlug;
 
 class PricingPlanTest extends TestCase
 {
@@ -23,7 +24,8 @@ class PricingPlanTest extends TestCase
     {
         $expected = [
             Uuid::class,
-            SoftDeletes::class
+            SoftDeletes::class,
+            HasSlug::class
         ];
 
         $this->assertEquals(
@@ -46,6 +48,7 @@ class PricingPlanTest extends TestCase
     {
         $expected = [
             'name',
+            'slug',
             'description',
             'price',
             'interval',
@@ -107,6 +110,16 @@ class PricingPlanTest extends TestCase
         ]);
 
         $this->assertTrue($plan->hasFeature($feature->slug));
+    }
+
+    public function testPricingPlanMustHaveSlug()
+    {
+        $plan = $this->create(PricingPlan::class, [
+            'name' => 'Plan 1',
+            'slug' => null
+        ]);
+
+        $this->assertEquals('plan-1', $plan->slug);
     }
 
     public function testPlanScopeMonthly()
