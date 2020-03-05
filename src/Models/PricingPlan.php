@@ -2,10 +2,10 @@
 
 namespace Rockbuzz\LaraPricing\Models;
 
-use Rockbuzz\LaraUuid\Traits\Uuid;
-use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
+use Rockbuzz\LaraUuid\Traits\Uuid;
+use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
 class PricingPlan extends Model
 {
@@ -40,9 +40,16 @@ class PricingPlan extends Model
         'updated_at'
     ];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+
+        $this->setTable(config('pricing.tables.pricing_plans'));
+    }
+
     public function features()
     {
-        return $this->belongsToMany(PricingFeature::class, 'pricing_feature_plan', 'plan_id', 'feature_id')
+        return $this->belongsToMany(config('pricing.models.feature'), 'pricing_feature_plan', 'plan_id', 'feature_id')
             ->withPivot('value');
     }
 

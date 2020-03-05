@@ -10,7 +10,7 @@ trait Subscribable
 {
     public function subscriptions(): MorphMany
     {
-        return $this->morphMany(PricingSubscription::class, 'subscribable');
+        return $this->morphMany(config('pricing.models.subscription'), 'subscribable');
     }
 
     public function currentSubscription()

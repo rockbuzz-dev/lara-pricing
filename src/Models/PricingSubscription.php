@@ -46,6 +46,13 @@ class PricingSubscription extends Model
         'canceled_at'
     ];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+
+        $this->setTable(config('pricing.tables.pricing_subscriptions'));
+    }
+
     public function subscribable(): MorphTo
     {
         return $this->morphTo();
@@ -53,12 +60,12 @@ class PricingSubscription extends Model
 
     public function plan(): BelongsTo
     {
-        return $this->belongsTo(PricingPlan::class, 'plan_id');
+        return $this->belongsTo(config('pricing.models.plan'), 'plan_id');
     }
 
     public function usages(): HasMany
     {
-        return $this->hasMany(PricingSubscriptionUsage::class, 'subscription_id');
+        return $this->hasMany(config('pricing.models.subscription_usage'), 'subscription_id');
     }
 
     public function getSlugOptions(): SlugOptions

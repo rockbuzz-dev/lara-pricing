@@ -2,10 +2,10 @@
 
 namespace Rockbuzz\LaraPricing\Models;
 
-use Rockbuzz\LaraUuid\Traits\Uuid;
-use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
+use Rockbuzz\LaraUuid\Traits\Uuid;
+use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
 class PricingFeature extends Model
 {
@@ -30,6 +30,13 @@ class PricingFeature extends Model
         'created_at',
         'updated_at'
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+
+        $this->setTable(config('pricing.tables.pricing_features'));
+    }
 
     public function getSlugOptions(): SlugOptions
     {

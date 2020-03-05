@@ -31,4 +31,11 @@ class PricingSubscriptionUsage extends Model
         'created_at',
         'updated_at'
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+
+        $this->setTable(config('pricing.tables.pricing_subscription_usages'));
+    }
 }
