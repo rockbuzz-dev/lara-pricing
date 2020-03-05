@@ -38,22 +38,22 @@ class CreatePricingTables extends Migration
             $table->softDeletes();
         });
 
-        Schema::create($tables['feature_plan'], function (Blueprint $table) {
+        Schema::create($tables['feature_plan'], function (Blueprint $table) use ($tables) {
             $table->uuid('feature_id')->index();
             $table->foreign('feature_id')
                 ->references('id')
-                ->on('features')
+                ->on($tables['features'])
                 ->onDelete('cascade');
             $table->uuid('plan_id')->index();
             $table->foreign('plan_id')
                 ->references('id')
-                ->on('plans')
+                ->on($tables['plans'])
                 ->onDelete('cascade');
             $table->string('value');
             $table->unique(['feature_id', 'plan_id']);
         });
 
-        Schema::create($tables['subscriptions'], function (Blueprint $table) {
+        Schema::create($tables['subscriptions'], function (Blueprint $table) use ($tables) {
             $table->uuid('id')->primary();
             $table->string('name')->unique();
             $table->string('slug')->unique();
@@ -66,25 +66,25 @@ class CreatePricingTables extends Migration
             $table->uuid('plan_id')->index();
             $table->foreign('plan_id')
                 ->references('id')
-                ->on('plans')
+                ->on($tables['plans'])
                 ->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
             $table->index(['subscribable_id', 'subscribable_type', 'plan_id'], 'subscribable_plan');
         });
 
-        Schema::create($tables['subscription_usages'], function (Blueprint $table) {
+        Schema::create($tables['subscription_usages'], function (Blueprint $table) use ($tables) {
             $table->uuid('id')->primary();
             $table->smallInteger('used');
             $table->uuid('feature_id')->index();
             $table->foreign('feature_id')
                 ->references('id')
-                ->on('features')
+                ->on($tables['features'])
                 ->onDelete('cascade');
             $table->uuid('subscription_id')->index();
             $table->foreign('subscription_id')
                 ->references('id')
-                ->on('subscriptions')
+                ->on($tables['subscriptions'])
                 ->onDelete('cascade');
             $table->json('metadata')->nullable();
             $table->timestamps();
