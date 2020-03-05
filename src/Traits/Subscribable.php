@@ -4,7 +4,7 @@ namespace Rockbuzz\LaraPricing\Traits;
 
 use LogicException;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Rockbuzz\LaraPricing\Models\{PricingFeature, PricingSubscription};
+use Rockbuzz\LaraPricing\Models\{Feature, Subscription};
 
 trait Subscribable
 {
@@ -61,7 +61,7 @@ trait Subscribable
 
         $this->ifActiveSubscriptionOrLogicException($subscription);
 
-        $feature = PricingFeature::whereSlug($featureSlug)->firstOrFail();
+        $feature = Feature::whereSlug($featureSlug)->firstOrFail();
 
         $subscription->plan->features()->where('feature_id', $feature->id)->firstOrFail();
 
@@ -99,7 +99,7 @@ trait Subscribable
 
         $this->ifActiveSubscriptionOrLogicException($subscription);
 
-        $feature = PricingFeature::whereSlug($featureSlug)->firstOrFail();
+        $feature = Feature::whereSlug($featureSlug)->firstOrFail();
 
         $subscription->plan->features()->where('feature_id', $feature->id)->firstOrFail();
 
@@ -129,7 +129,7 @@ trait Subscribable
      */
     public function consumedUse(string $featureSlug): int
     {
-        $feature = PricingFeature::whereSlug($featureSlug)->first();
+        $feature = Feature::whereSlug($featureSlug)->first();
 
         if ($feature) {
             $subscription = $this->currentSubscription();
@@ -163,7 +163,7 @@ trait Subscribable
      */
     public function canUse(string $featureSlug): bool
     {
-        $feature = PricingFeature::whereSlug($featureSlug)->first();
+        $feature = Feature::whereSlug($featureSlug)->first();
 
         if ($feature) {
             if ($this->featureEnabled($feature->slug)) {
@@ -187,7 +187,7 @@ trait Subscribable
      */
     public function removeUse(string $featureSlug)
     {
-        $feature = PricingFeature::whereSlug($featureSlug)->first();
+        $feature = Feature::whereSlug($featureSlug)->first();
 
         if ($feature) {
             $subscription = $this->currentSubscription();
@@ -199,13 +199,13 @@ trait Subscribable
     }
 
     /**
-     * @param PricingSubscription $subscription
-     * @param PricingFeature $feature
+     * @param Subscription $subscription
+     * @param Feature $feature
      * @throws LogicException
      */
     protected function isANewFeatureOrLogicException(
-        PricingSubscription $subscription,
-        PricingFeature $feature
+        Subscription $subscription,
+        Feature $feature
     ): void
     {
         //if subscription creation > or = to feature
@@ -217,10 +217,10 @@ trait Subscribable
     }
 
     /**
-     * @param PricingSubscription $subscription
+     * @param Subscription $subscription
      * @throws LogicException
      */
-    protected function ifActiveSubscriptionOrLogicException(PricingSubscription $subscription): void
+    protected function ifActiveSubscriptionOrLogicException(Subscription $subscription): void
     {
         if ($subscription->isInactive()) {
             throw new \LogicException('You cannot perform this action with an inactive subscription');

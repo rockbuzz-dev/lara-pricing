@@ -1,25 +1,21 @@
 <?php
 
-use Rockbuzz\LaraPricing\Models\{PricingPlan,
-    PricingFeature,
-    PricingSubscription,
-    PricingSubscriptionUsage,
-    PricingActivity};
+use Rockbuzz\LaraPricing\Models\{Plan, Feature, Subscription, SubscriptionUsage, PricingActivity};
 
 return [
     'tables' => [
-        'pricing_plans' => 'pricing_plans',
-        'pricing_features' => 'pricing_features',
-        'pricing_feature_plan' => 'pricing_feature_plan',
-        'pricing_subscriptions' => 'pricing_subscriptions',
-        'pricing_subscription_usages' => 'pricing_subscription_usages',
+        'plans' => 'plans',
+        'features' => 'features',
+        'feature_plan' => 'feature_plan',
+        'subscriptions' => 'subscriptions',
+        'subscription_usages' => 'subscription_usages',
         'pricing_activities' => 'pricing_activities'
     ],
     'models' => [
-        'plan' => PricingPlan::class,
-        'feature' => PricingFeature::class,
-        'subscription' => PricingSubscription::class,
-        'subscription_usage' => PricingSubscriptionUsage::class,
+        'plan' => Plan::class,
+        'feature' => Feature::class,
+        'subscription' => Subscription::class,
+        'subscription_usage' => SubscriptionUsage::class,
         'activity' => PricingActivity::class
     ],
     'positive_values' => ['Y', 'OK', 'TRUE']

@@ -3,7 +3,7 @@
 namespace Rockbuzz\LaraPricing\Events;
 
 use Illuminate\Queue\SerializesModels;
-use Rockbuzz\LaraPricing\Models\PricingSubscription;
+use Rockbuzz\LaraPricing\Models\Subscription;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Broadcasting\{Channel, InteractsWithSockets, PresenceChannel, PrivateChannel};
@@ -13,11 +13,11 @@ class SubscriptionCanceled
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
-     * @var PricingSubscription
+     * @var Subscription
      */
     public $subscription;
 
-    public function __construct(PricingSubscription $subscription)
+    public function __construct(Subscription $subscription)
     {
         $this->subscription = $subscription;
     }

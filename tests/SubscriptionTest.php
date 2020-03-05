@@ -2,20 +2,20 @@
 
 namespace Tests\Unit;
 
-use Spatie\Sluggable\HasSlug;
 use Tests\TestCase;
+use Spatie\Sluggable\HasSlug;
 use Rockbuzz\LaraUuid\Traits\Uuid;
 use Tests\Models\{User, Workspace};
 use Illuminate\Support\Facades\Event;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphTo};
-use Rockbuzz\LaraPricing\Models\{PricingPlan, PricingSubscriptionUsage, PricingSubscription};
+use Rockbuzz\LaraPricing\Models\{Plan, SubscriptionUsage, Subscription};
 use Rockbuzz\LaraPricing\Events\{SubscriptionCanceled,
     SubscriptionFinished,
     SubscriptionStarted,
     SubscriptionMakeRecurring};
 
-class PricingSubscriptionTest extends TestCase
+class SubscriptionTest extends TestCase
 {
     protected $subscription;
 
@@ -23,7 +23,7 @@ class PricingSubscriptionTest extends TestCase
     {
         parent::setUp();
 
-        $this->subscription = new PricingSubscription();
+        $this->subscription = new Subscription();
     }
 
     public function testIfUsesTraits()
@@ -36,7 +36,7 @@ class PricingSubscriptionTest extends TestCase
 
         $this->assertEquals(
             $expected,
-            array_values(class_uses(PricingSubscription::class))
+            array_values(class_uses(Subscription::class))
         );
     }
 
@@ -97,7 +97,7 @@ class PricingSubscriptionTest extends TestCase
     public function testSubscriptionHasSubscribable()
     {
         $workspace = $this->create(Workspace::class);
-        $subscription = $this->create(PricingSubscription::class, [
+        $subscription = $this->create(Subscription::class, [
             'subscribable_id' => $workspace->id,
             'subscribable_type' => Workspace::class,
         ]);
@@ -108,8 +108,8 @@ class PricingSubscriptionTest extends TestCase
 
     public function testSubscriptionHasPlan()
     {
-        $plan = $this->create(PricingPlan::class);
-        $subscription = $this->create(PricingSubscription::class, [
+        $plan = $this->create(Plan::class);
+        $subscription = $this->create(Subscription::class, [
             'plan_id' => $plan->id
         ]);
 
@@ -119,9 +119,9 @@ class PricingSubscriptionTest extends TestCase
 
     public function testSubscriptionCanHaveUsages()
     {
-        $subscription = $this->create(PricingSubscription::class);
+        $subscription = $this->create(Subscription::class);
 
-        $usage = $this->create(PricingSubscriptionUsage::class, [
+        $usage = $this->create(SubscriptionUsage::class, [
             'subscription_id' => $subscription->id
         ]);
 
@@ -131,7 +131,7 @@ class PricingSubscriptionTest extends TestCase
 
     public function testPricingSubscriptionMustHaveSlug()
     {
-        $subscription = $this->create(PricingSubscription::class, [
+        $subscription = $this->create(Subscription::class, [
             'name' => 'Subscription Name',
             'slug' => null
         ]);
@@ -143,7 +143,7 @@ class PricingSubscriptionTest extends TestCase
     {
         Event::fake([SubscriptionStarted::class]);
 
-        $subscription = $this->create(PricingSubscription::class, [
+        $subscription = $this->create(Subscription::class, [
             'start_at' => now()->addMinute()
         ]);
 
@@ -168,7 +168,7 @@ class PricingSubscriptionTest extends TestCase
     {
         Event::fake([SubscriptionFinished::class]);
 
-        $subscription = $this->create(PricingSubscription::class, [
+        $subscription = $this->create(Subscription::class, [
             'finish_at' => null
         ]);
 
@@ -191,7 +191,7 @@ class PricingSubscriptionTest extends TestCase
     {
         Event::fake([SubscriptionCanceled::class]);
 
-        $subscription = $this->create(PricingSubscription::class, [
+        $subscription = $this->create(Subscription::class, [
             'canceled_at' => null
         ]);
 
@@ -213,7 +213,7 @@ class PricingSubscriptionTest extends TestCase
     {
         Event::fake([SubscriptionMakeRecurring::class]);
 
-        $subscription = $this->create(PricingSubscription::class, [
+        $subscription = $this->create(Subscription::class, [
             'start_at' => now()->subMonth(),
             'finish_at' => now()->subMonth(),
             'canceled_at' => null
@@ -232,8 +232,8 @@ class PricingSubscriptionTest extends TestCase
 
     public function testSubscriptionHasTrial()
     {
-        $plan = $this->create(PricingPlan::class, ['trial_period_days' => 0]);
-        $subscription = $this->create(PricingSubscription::class, [
+        $plan = $this->create(Plan::class, ['trial_period_days' => 0]);
+        $subscription = $this->create(Subscription::class, [
             'plan_id' => $plan->id
         ]);
 
@@ -246,8 +246,8 @@ class PricingSubscriptionTest extends TestCase
 
     public function testSubscriptionTrial()
     {
-        $plan = $this->create(PricingPlan::class, ['trial_period_days' => 15]);
-        $subscription = $this->create(PricingSubscription::class, [
+        $plan = $this->create(Plan::class, ['trial_period_days' => 15]);
+        $subscription = $this->create(Subscription::class, [
             'plan_id' => $plan->id
         ]);
 
@@ -256,7 +256,7 @@ class PricingSubscriptionTest extends TestCase
 
     public function testSubscriptionActive()
     {
-        $subscription = $this->create(PricingSubscription::class, [
+        $subscription = $this->create(Subscription::class, [
             'start_at' => now()->addDay(),
             'finish_at' => now()->subMinute(),
             'canceled_at' => now()->subMinute()

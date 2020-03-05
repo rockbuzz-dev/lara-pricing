@@ -12,7 +12,7 @@ use Rockbuzz\LaraPricing\Events\{SubscriptionCanceled,
     SubscriptionMakeRecurring,
     SubscriptionStarted};
 
-class PricingSubscription extends Model
+class Subscription extends Model
 {
     use Uuid, SoftDeletes, HasSlug;
 
@@ -50,7 +50,7 @@ class PricingSubscription extends Model
     {
         parent::__construct($attributes);
 
-        $this->setTable(config('pricing.tables.pricing_subscriptions'));
+        $this->setTable(config('pricing.tables.subscriptions'));
     }
 
     public function subscribable(): MorphTo

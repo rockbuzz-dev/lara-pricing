@@ -2,28 +2,27 @@
 
 namespace Rockbuzz\LaraPricing\Models;
 
+use Spatie\Sluggable\HasSlug;
+use Spatie\Sluggable\SlugOptions;
 use Rockbuzz\LaraUuid\Traits\Uuid;
-use Rockbuzz\LaraPricing\Traits\Activityable;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
-class PricingSubscriptionUsage extends Model
+class Feature extends Model
 {
-    use Uuid, SoftDeletes, Activityable;
+    use Uuid, SoftDeletes, HasSlug;
 
     public $incrementing = false;
 
     protected $keyType = 'string';
 
     protected $fillable = [
-        'used',
-        'subscription_id',
-        'feature_id',
-        'metadata'
+        'name',
+        'slug',
+        'sort_order'
     ];
 
     protected $casts = [
-        'id' => 'string',
-        'metadata' => 'array'
+        'id' => 'string'
     ];
 
     protected $dates = [
@@ -36,6 +35,13 @@ class PricingSubscriptionUsage extends Model
     {
         parent::__construct($attributes);
 
-        $this->setTable(config('pricing.tables.pricing_subscription_usages'));
+        $this->setTable(config('pricing.tables.features'));
+    }
+
+    public function getSlugOptions(): SlugOptions
+    {
+        return SlugOptions::create()
+            ->generateSlugsFrom('name')
+            ->saveSlugsTo('slug');
     }
 }

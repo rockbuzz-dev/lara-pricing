@@ -7,9 +7,9 @@ use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Rockbuzz\LaraPricing\Traits\Activityable;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Rockbuzz\LaraPricing\Models\{PricingSubscriptionUsage, PricingActivity};
+use Rockbuzz\LaraPricing\Models\{SubscriptionUsage, PricingActivity};
 
-class PricingSubscriptionUsageTest extends TestCase
+class SubscriptionUsageTest extends TestCase
 {
     protected $signature;
 
@@ -17,7 +17,7 @@ class PricingSubscriptionUsageTest extends TestCase
     {
         parent::setUp();
 
-        $this->signature = new PricingSubscriptionUsage();
+        $this->signature = new SubscriptionUsage();
     }
 
     public function testIfUsesTraits()
@@ -30,7 +30,7 @@ class PricingSubscriptionUsageTest extends TestCase
 
         $this->assertEquals(
             $expected,
-            array_values(class_uses(PricingSubscriptionUsage::class))
+            array_values(class_uses(SubscriptionUsage::class))
         );
     }
 
@@ -80,13 +80,13 @@ class PricingSubscriptionUsageTest extends TestCase
         );
     }
 
-    public function testSubscriptionCanHaveActivities()
+    public function testSubscriptionUsageCanHaveActivities()
     {
-        $subscriptionUsage = $this->create(PricingSubscriptionUsage::class);
+        $subscriptionUsage = $this->create(SubscriptionUsage::class);
 
         $activity = $this->create(PricingActivity::class, [
             'activityable_id' => $subscriptionUsage->id,
-            'activityable_type' => PricingSubscriptionUsage::class,
+            'activityable_type' => SubscriptionUsage::class,
         ]);
 
         $this->assertInstanceOf(MorphMany::class, $subscriptionUsage->activities());

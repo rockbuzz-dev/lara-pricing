@@ -3,9 +3,9 @@
 /** @var \Illuminate\Database\Eloquent\Factory $factory */
 
 use Faker\Generator as Faker;
-use Rockbuzz\LaraPricing\Models\PricingFeature;
+use Rockbuzz\LaraPricing\Models\Feature;
 
-$factory->define(PricingFeature::class, function (Faker $faker) {
+$factory->define(Feature::class, function (Faker $faker) {
     $name = $faker->unique()->word;
     return [
         'name' => $name,

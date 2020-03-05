@@ -6,9 +6,9 @@ use Tests\TestCase;
 use Spatie\Sluggable\HasSlug;
 use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Rockbuzz\LaraPricing\Models\PricingFeature;
+use Rockbuzz\LaraPricing\Models\Feature;
 
-class PricingFeatureTest extends TestCase
+class FeatureTest extends TestCase
 {
     protected $feature;
 
@@ -16,7 +16,7 @@ class PricingFeatureTest extends TestCase
     {
         parent::setUp();
 
-        $this->feature = new PricingFeature();
+        $this->feature = new Feature();
     }
 
     public function testIfUsesTraits()
@@ -29,7 +29,7 @@ class PricingFeatureTest extends TestCase
 
         $this->assertEquals(
             $expected,
-            array_values(class_uses(PricingFeature::class))
+            array_values(class_uses(Feature::class))
         );
     }
 
@@ -71,7 +71,7 @@ class PricingFeatureTest extends TestCase
 
     public function testFeatureMustHaveSlug()
     {
-        $feature = $this->create(PricingFeature::class, [
+        $feature = $this->create(Feature::class, [
             'name' => 'Max Users',
             'slug' => null
         ]);

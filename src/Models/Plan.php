@@ -7,7 +7,7 @@ use Spatie\Sluggable\SlugOptions;
 use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
-class PricingPlan extends Model
+class Plan extends Model
 {
     use Uuid, SoftDeletes, HasSlug;
 
@@ -44,12 +44,12 @@ class PricingPlan extends Model
     {
         parent::__construct($attributes);
 
-        $this->setTable(config('pricing.tables.pricing_plans'));
+        $this->setTable(config('pricing.tables.plans'));
     }
 
     public function features()
     {
-        return $this->belongsToMany(config('pricing.models.feature'), 'pricing_feature_plan', 'plan_id', 'feature_id')
+        return $this->belongsToMany(config('pricing.models.feature'), config('pricing.models.feature_plan'), 'plan_id', 'feature_id')
             ->withPivot('value');
     }
 

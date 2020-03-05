@@ -6,10 +6,10 @@ use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Rockbuzz\LaraPricing\Enums\PlanFeatureValue;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Rockbuzz\LaraPricing\Models\{PricingPlan, PricingFeature};
+use Rockbuzz\LaraPricing\Models\{Plan, Feature};
 use Spatie\Sluggable\HasSlug;
 
-class PricingPlanTest extends TestCase
+class PlanTest extends TestCase
 {
     protected $plan;
 
@@ -17,7 +17,7 @@ class PricingPlanTest extends TestCase
     {
         parent::setUp();
 
-        $this->plan = new PricingPlan();
+        $this->plan = new Plan();
     }
 
     public function testIfUsesTraits()
@@ -30,7 +30,7 @@ class PricingPlanTest extends TestCase
 
         $this->assertEquals(
             $expected,
-            array_values(class_uses(PricingPlan::class))
+            array_values(class_uses(Plan::class))
         );
     }
 
@@ -83,10 +83,10 @@ class PricingPlanTest extends TestCase
 
     public function testPlanCanHaveFeatures()
     {
-        $plan = $this->create(PricingPlan::class);
-        $feature = $this->create(PricingFeature::class);
+        $plan = $this->create(Plan::class);
+        $feature = $this->create(Feature::class);
 
-        \DB::table(config('pricing.tables.pricing_feature_plan'))->insert([
+        \DB::table(config('pricing.tables.feature_plan'))->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => PlanFeatureValue::POSITIVE
@@ -98,12 +98,12 @@ class PricingPlanTest extends TestCase
 
     public function testPlanHasFeature()
     {
-        $plan = $this->create(PricingPlan::class);
-        $feature = $this->create(PricingFeature::class);
+        $plan = $this->create(Plan::class);
+        $feature = $this->create(Feature::class);
 
         $this->assertFalse($plan->hasFeature($feature->slug));
 
-        \DB::table(config('pricing.tables.pricing_feature_plan'))->insert([
+        \DB::table(config('pricing.tables.feature_plan'))->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => PlanFeatureValue::POSITIVE
@@ -114,7 +114,7 @@ class PricingPlanTest extends TestCase
 
     public function testPricingPlanMustHaveSlug()
     {
-        $plan = $this->create(PricingPlan::class, [
+        $plan = $this->create(Plan::class, [
             'name' => 'Plan 1',
             'slug' => null
         ]);
@@ -124,19 +124,19 @@ class PricingPlanTest extends TestCase
 
     public function testPlanScopeMonthly()
     {
-        $plan = $this->create(PricingPlan::class, ['interval' => 'month', 'period' => 3]);
-        $monthlyPlan = $this->create(PricingPlan::class, ['interval' => 'month', 'period' => 1]);
+        $plan = $this->create(Plan::class, ['interval' => 'month', 'period' => 3]);
+        $monthlyPlan = $this->create(Plan::class, ['interval' => 'month', 'period' => 1]);
 
-        $this->assertNotContains($plan->id, PricingPlan::monthly()->get()->pluck('id'));
-        $this->assertContains($monthlyPlan->id, PricingPlan::monthly()->get()->pluck('id'));
+        $this->assertNotContains($plan->id, Plan::monthly()->get()->pluck('id'));
+        $this->assertContains($monthlyPlan->id, Plan::monthly()->get()->pluck('id'));
     }
 
     public function testPlanScopeYearly()
     {
-        $plan = $this->create(PricingPlan::class, ['interval' => 'month', 'period' => 3]);
-        $yearlyPlan = $this->create(PricingPlan::class, ['interval' => 'month', 'period' => 12]);
+        $plan = $this->create(Plan::class, ['interval' => 'month', 'period' => 3]);
+        $yearlyPlan = $this->create(Plan::class, ['interval' => 'month', 'period' => 12]);
 
-        $this->assertNotContains($plan->id, PricingPlan::yearly()->get()->pluck('id'));
-        $this->assertContains($yearlyPlan->id, PricingPlan::yearly()->get()->pluck('id'));
+        $this->assertNotContains($plan->id, Plan::yearly()->get()->pluck('id'));
+        $this->assertContains($yearlyPlan->id, Plan::yearly()->get()->pluck('id'));
     }
 }
