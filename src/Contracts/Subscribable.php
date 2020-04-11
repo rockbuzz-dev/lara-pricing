@@ -6,6 +6,7 @@ use LogicException;
 use Rockbuzz\LaraPricing\Models\{Plan, Subscription};
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Rockbuzz\LaraPricing\DTOs\ChangePlanOptions;
 
 interface Subscribable
 {
@@ -25,6 +26,13 @@ interface Subscribable
      * @throws ModelNotFoundException
      */
     public function currentPlan(): Plan;
+
+    /**
+     * @param Plan $newPlan
+     * @param ChangePlanOptions|null $options
+     * @return bool
+     */
+    public function changePlan(Plan $newPlan, ChangePlanOptions $options = null): bool;
 
     /**
      * @param string $featureSlug

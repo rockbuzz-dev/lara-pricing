@@ -55,8 +55,8 @@ class CreatePricingTables extends Migration
 
         Schema::create($tables['subscriptions'], function (Blueprint $table) use ($tables) {
             $table->uuid('id')->primary();
-            $table->string('name')->unique();
-            $table->string('slug')->unique();
+            $table->string('name');
+            $table->string('slug');
             $table->dateTime('start_at')->useCurrent();
             $table->dateTime('finish_at')->nullable();
             $table->dateTime('canceled_at')->nullable();

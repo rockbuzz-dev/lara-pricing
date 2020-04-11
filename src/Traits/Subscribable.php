@@ -3,7 +3,10 @@
 namespace Rockbuzz\LaraPricing\Traits;
 
 use LogicException;
+use Illuminate\Support\Str;
+use Rockbuzz\LaraPricing\DTOs\ChangePlanOptions;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Rockbuzz\LaraPricing\Events\ChangePlan;
 use Rockbuzz\LaraPricing\Models\{Feature, Plan, Subscription};
 
 trait Subscribable
@@ -30,6 +33,39 @@ trait Subscribable
     public function currentPlan(): Plan
     {
         return $this->currentSubscription()->plan;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function changePlan(Plan $newPlan, ChangePlanOptions $options = null): bool
+    {
+        $now = now();
+        $options = $options ?? new ChangePlanOptions(
+            Str::slug($this->name . '-' . $now->getTimestamp()),
+            $now->format('d'),
+            $now
+        );
+
+        $oldSubscription = $this->currentSubscription();
+
+        $currentSubscription = $this->subscriptions()->create([
+            'name' => $options->getSubscriptionName(),
+            'start_at' => $options->getStartAt(),
+            'finish_at' => $options->getFinishAt(),
+            'due_day' => $options->getDueDay(),
+            'plan_id' => $newPlan->id
+        ]);
+
+        if ($currentSubscription) {
+            $oldSubscription->delete();
+
+            event(new ChangePlan($currentSubscription));
+
+            return true;
+        }
+
+        return false;
     }
 
     /**

@@ -4,6 +4,8 @@ namespace Tests;
 
 use Illuminate\Support\Facades\DB;
 use Tests\Models\{User, Workspace};
+use Illuminate\Support\Facades\Event;
+use Rockbuzz\LaraPricing\Events\ChangePlan;
 use Rockbuzz\LaraPricing\Enums\PlanFeatureValue;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -86,6 +88,36 @@ class SubscribableTest extends TestCase
         $this->expectException(ModelNotFoundException::class);
 
         $subscribable->currentPlan();
+    }
+
+    public function testSubscribableHasChangePlan()
+    {
+        Event::fake([ChangePlan::class]);
+        $subscribable = $this->create(Workspace::class);
+        $plan = $this->create(Plan::class);
+
+        $this->create(Subscription::class, [
+            'created_at' => now()->subSecond(),
+            'start_at' => now()->subSecond(),
+            'finish_at' => null,
+            'canceled_at' => null,
+            'plan_id' => $plan->id,
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Workspace::class,
+        ]);
+
+        $newPlan = $this->create(Plan::class);
+
+        $this->assertTrue($subscribable->changePlan($newPlan));
+
+        $currentSubscription = $subscribable->currentSubscription();
+
+        Event::assertDispatched(ChangePlan::class, function ($e) use ($currentSubscription) {
+            return $e->subscription->id === $currentSubscription->id;
+        });
+
+        $this->assertNotEquals($plan->id, $subscribable->currentPlan()->id);
+        $this->assertEquals($newPlan->id, $subscribable->currentPlan()->id);
     }
 
     public function testSubscribableFeatureEnabled()
