@@ -26,6 +26,8 @@ Add Subscribable contract end trait to your model
 ```php
 use Rockbuzz\LaraPricing\Contracts\Subscribable as SubscribableContract;
 use Rockbuzz\LaraPricing\Traits\Subscribable;
+use Rockbuzz\LaraPricing\Models\{Plan, Subscription}
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 	
 class YourModel implements SubscribableContract
 {
@@ -38,15 +40,16 @@ class YourModel implements SubscribableContract
 ## Usage
 
 ```php
-$model->subscriptions();
-$model->currentSubscription();
-$model->featureEnabled($featureSlug);
-$model->featureValue($featureSlug);
-$model->incrementUse($featureSlug, 2);
-$model->decrementUse($featureSlug, 2);
-$model->consumedUse($featureSlug);
-$model->remainingUse($featureSlug);
-$model->canUse($featureSlug);
+$yourModel->subscriptions(): MorphMany
+$yourModel->currentSubscription(): Subscription
+$yourModel->currentPlan(): Plan
+$yourModel->featureEnabled(string $featureSlug): bool
+$yourModel->featureValue(string $featureSlug): string
+$yourModel->incrementUse(string $featureSlug, int $uses = 1): void
+$yourModel->decrementUse(string $featureSlug, int $uses = 1): void
+$yourModel->consumedUse(string $featureSlug): int
+$yourModel->remainingUse(string $featureSlug): int
+$yourModel->canUse(string $featureSlug): bool
 ```
 
 ## License

@@ -4,21 +4,30 @@ namespace Rockbuzz\LaraPricing\Traits;
 
 use LogicException;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Rockbuzz\LaraPricing\Models\{Feature, Subscription};
+use Rockbuzz\LaraPricing\Models\{Feature, Plan, Subscription};
 
 trait Subscribable
 {
+    /**
+     * @inheritDoc
+     */
     public function subscriptions(): MorphMany
     {
         return $this->morphMany(config('pricing.models.subscription'), 'subscribable');
     }
 
-    public function currentSubscription()
+    /**
+     * @inheritDoc
+     */
+    public function currentSubscription(): Subscription
     {
         return $this->subscriptions()->latest()->firstOrFail();
     }
 
-    public function currentPlan()
+    /**
+     * @inheritDoc
+     */
+    public function currentPlan(): Plan
     {
         return $this->currentSubscription()->plan;
     }

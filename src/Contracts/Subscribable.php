@@ -3,12 +3,28 @@
 namespace Rockbuzz\LaraPricing\Contracts;
 
 use LogicException;
+use Rockbuzz\LaraPricing\Models\{Plan, Subscription};
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 interface Subscribable
 {
+    /**
+     * @return MorphMany
+     */
     public function subscriptions(): MorphMany;
+
+    /**
+     * @return Subscription
+     * @throws ModelNotFoundException
+     */
+    public function currentSubscription(): Subscription;
+
+    /**
+     * @return Plan
+     * @throws ModelNotFoundException
+     */
+    public function currentPlan(): Plan;
 
     /**
      * @param string $featureSlug
