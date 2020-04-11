@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use Illuminate\Support\Facades\DB;
 use Tests\Models\{User, Workspace};
 use Rockbuzz\LaraPricing\Enums\PlanFeatureValue;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -61,6 +62,32 @@ class SubscribableTest extends TestCase
         $subscribable->currentSubscription();
     }
 
+    public function testSubscribableHasCurrentPlan()
+    {
+        $subscribable = $this->create(Workspace::class);
+        $plan = $this->create(Plan::class);
+
+        $this->create(Subscription::class, [
+            'created_at' => now()->subSecond(),
+            'start_at' => now()->subSecond(),
+            'finish_at' => null,
+            'canceled_at' => null,
+            'plan_id' => $plan->id,
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Workspace::class,
+        ]);
+
+        $this->assertEquals($plan->id, $subscribable->currentPlan()->id);
+
+        Subscription::all()->each(function ($subscription) {
+            $subscription->delete();
+        });
+
+        $this->expectException(ModelNotFoundException::class);
+
+        $subscribable->currentPlan();
+    }
+
     public function testSubscribableFeatureEnabled()
     {
         $subscribable = $this->create(Workspace::class);
@@ -94,7 +121,7 @@ class SubscribableTest extends TestCase
 
         $this->assertEquals('0', $subscribable->featureValue($feature->slug));
 
-        \DB::table(config('pricing.tables.feature_plan'))->insert([
+        DB::table(config('pricing.tables.feature_plan'))->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => '10'
@@ -239,7 +266,7 @@ class SubscribableTest extends TestCase
         $plan->features()->attach([$feature->id => ['value' => '10']]);
 
         $usageId = \Ramsey\Uuid\Uuid::uuid4();
-        \DB::table(config('pricing.tables.subscription_usages'))->insert([
+        DB::table(config('pricing.tables.subscription_usages'))->insert([
             'id' => $usageId,
             'used' => '5',
             'feature_id' => $feature->id,
@@ -345,7 +372,7 @@ class SubscribableTest extends TestCase
         $plan->features()->attach([$feature->id => ['value' => '10']]);
 
         $usageId = \Ramsey\Uuid\Uuid::uuid4();
-        \DB::table(config('pricing.tables.subscription_usages'))->insert([
+        DB::table(config('pricing.tables.subscription_usages'))->insert([
             'id' => $usageId,
             'used' => '5',
             'feature_id' => $feature->id,
@@ -582,7 +609,7 @@ class SubscribableTest extends TestCase
             'subscribable_type' => Workspace::class,
         ]);
 
-        \DB::table(config('pricing.tables.feature_plan'))->insert([
+        DB::table(config('pricing.tables.feature_plan'))->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => '10'
@@ -618,7 +645,7 @@ class SubscribableTest extends TestCase
             'subscribable_type' => Workspace::class,
         ]);
 
-        \DB::table(config('pricing.tables.feature_plan'))->insert([
+        DB::table(config('pricing.tables.feature_plan'))->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => '10'

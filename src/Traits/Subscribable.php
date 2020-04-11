@@ -18,6 +18,11 @@ trait Subscribable
         return $this->subscriptions()->latest()->firstOrFail();
     }
 
+    public function currentPlan()
+    {
+        return $this->currentSubscription()->plan;
+    }
+
     /**
      * @inheritDoc
      */
