@@ -129,14 +129,20 @@ trait Subscribable
             $usage->update(['used' => $usage->used + $uses]);
         }
 
+        $user = auth()->user();
+
+        if (!$user) {
+            throw new \LogicException('Authenticated user is required');
+        }
+
         $usage->activities()->create([
             'description' => "incremented {$uses} {$feature->name}",
             'changes' => [
                 'before' => $before,
                 'after' => $usage->fresh()->used
             ],
-            'causeable_id' => auth()->user()->id,
-            'causeable_type' => get_class(auth()->user())
+            'causeable_id' => $user->id,
+            'causeable_type' => get_class($user)
         ]);
     }
 
@@ -163,14 +169,20 @@ trait Subscribable
 
         $usage->update(['used' => $used]);
 
+        $user = auth()->user();
+
+        if (!$user) {
+            throw new \LogicException('Authenticated user is required');
+        }
+
         $usage->activities()->create([
             'description' => "decremented {$uses} {$feature->name}",
             'changes' => [
                 'before' => $before,
                 'after' => $usage->fresh()->used
             ],
-            'causeable_id' => auth()->user()->id,
-            'causeable_type' => get_class(auth()->user())
+            'causeable_id' => $user->id,
+            'causeable_type' => get_class($user)
         ]);
     }
 

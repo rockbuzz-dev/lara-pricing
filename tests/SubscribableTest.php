@@ -236,6 +236,32 @@ class SubscribableTest extends TestCase
         $subscribable->incrementUse($feature->slug);
     }
 
+    public function testSubscribableIncrementUseMustThrowExceptionWhenWithoutAuthenticatedUser()
+    {
+        $subscribable = $this->create(Workspace::class);
+        $plan = $this->create(Plan::class);
+        $this->create(Subscription::class, [
+            'created_at' => now(),
+            'start_at' => now(),
+            'canceled_at' => null,
+            'finish_at' => now()->addMonth(),
+            'plan_id' => $plan->id,
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Workspace::class,
+        ]);
+        $feature = $this->create(Feature::class, [
+            'name' => 'Users',
+            'slug' => 'users',
+            'created_at' => now()->addDay()
+        ]);
+        $plan->features()->attach([$feature->id => ['value' => '10']]);
+
+        $this->expectExceptionMessage('Authenticated user is required');
+        $this->expectException(\LogicException::class);
+
+        $subscribable->incrementUse($feature->slug);
+    }
+
     public function testSubscribableIncrementUseWithoutFeatureUsage()
     {
         $subscribable = $this->create(Workspace::class);
@@ -387,6 +413,33 @@ class SubscribableTest extends TestCase
         $plan->features()->attach([$feature->id => ['value' => '10']]);
 
         $this->expectException(ModelNotFoundException::class);
+
+        $subscribable->decrementUse('users');
+    }
+
+    public function testSubscribableDecrementUseWithoutAuthenticatedUser()
+    {
+        /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
+        $subscribable = $this->create(Workspace::class);
+        $plan = $this->create(Plan::class);
+        $subscription = $this->create(Subscription::class, [
+            'plan_id' => $plan->id,
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Workspace::class,
+        ]);
+        $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
+        $plan->features()->attach([$feature->id => ['value' => '10']]);
+
+        $usageId = \Ramsey\Uuid\Uuid::uuid4();
+        DB::table(config('pricing.tables.subscription_usages'))->insert([
+            'id' => $usageId,
+            'used' => '5',
+            'feature_id' => $feature->id,
+            'subscription_id' => $subscription->id,
+        ]);
+
+        $this->expectExceptionMessage('Authenticated user is required');
+        $this->expectException(\LogicException::class);
 
         $subscribable->decrementUse('users');
     }
