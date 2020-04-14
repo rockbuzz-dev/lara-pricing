@@ -229,7 +229,7 @@ class SubscribableTest extends TestCase
         $plan->features()->attach([$feature->id => ['value' => '10']]);
 
         $this->expectExceptionMessage(
-            'Subscription creation date must be greater than or equal to the functionality'
+            'The subscription creation date must be less than that of the functionality'
         );
         $this->expectException(\LogicException::class);
 
