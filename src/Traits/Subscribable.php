@@ -258,10 +258,10 @@ trait Subscribable
         Feature $feature
     ): void
     {
-        //if subscription creation > or = to feature
+        //subscription >= feature
         if ($subscription->created_at->gte($feature->created_at)) {
             throw new LogicException(
-                'Subscription creation date must be greater than or equal to the functionality'
+                'The subscription creation date must be less than that of the functionality'
             );
         }
     }
