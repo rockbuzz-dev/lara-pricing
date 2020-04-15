@@ -4,9 +4,10 @@ namespace Rockbuzz\LaraPricing\Traits;
 
 use LogicException;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Rockbuzz\LaraPricing\Events\ChangePlan;
 use Rockbuzz\LaraPricing\DTOs\ChangePlanOptions;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Rockbuzz\LaraPricing\Events\ChangePlan;
 use Rockbuzz\LaraPricing\Models\{Feature, Plan, Subscription};
 
 trait Subscribable
@@ -40,32 +41,44 @@ trait Subscribable
      */
     public function changePlan(Plan $newPlan, ChangePlanOptions $options = null): bool
     {
-        $now = now();
-        $options = $options ?? new ChangePlanOptions(
-            Str::slug($this->name . '-' . $now->getTimestamp()),
-            $now->format('d'),
-            $now
-        );
+        return DB::transaction(function () use ($newPlan, $options) {
 
-        $oldSubscription = $this->currentSubscription();
+            $now = now();
+            $options = $options ?? new ChangePlanOptions(
+                Str::slug($this->name . '-' . $now->getTimestamp()),
+                $now->format('d'),
+                $now
+            );
 
-        $currentSubscription = $this->subscriptions()->create([
-            'name' => $options->getSubscriptionName(),
-            'start_at' => $options->getStartAt(),
-            'finish_at' => $options->getFinishAt(),
-            'due_day' => $options->getDueDay(),
-            'plan_id' => $newPlan->id
-        ]);
+            $oldSubscription = $this->currentSubscription();
 
-        if ($currentSubscription) {
-            $oldSubscription->delete();
-
-            event(new ChangePlan($currentSubscription));
-
-            return true;
-        }
-
-        return false;
+            $currentSubscription = $this->subscriptions()->create([
+                'name' => $options->getSubscriptionName(),
+                'start_at' => $options->getStartAt(),
+                'finish_at' => $options->getFinishAt(),
+                'due_day' => $options->getDueDay(),
+                'plan_id' => $newPlan->id
+            ]);
+    
+            if ($currentSubscription) {
+    
+                $oldSubscription->usages->each(function ($usage) use ($currentSubscription) {
+                    $currentSubscription->usages()->create([
+                        'used' => $usage->used,
+                        'feature_id' => $usage->feature_id,
+                        'metadata' => $usage->metadata
+                    ]);
+                });
+    
+                $oldSubscription->delete();
+    
+                event(new ChangePlan($currentSubscription));
+    
+                return true;
+            }
+    
+            return false;
+        });
     }
 
     /**
@@ -107,43 +120,45 @@ trait Subscribable
      */
     public function incrementUse(string $featureSlug, int $uses = 1): void
     {
-        $subscription = $this->currentSubscription();
+        DB::transaction(function () use ($featureSlug, $uses) {
+            $subscription = $this->currentSubscription();
 
-        $this->ifActiveSubscriptionOrLogicException($subscription);
+            $this->ifActiveSubscriptionOrLogicException($subscription);
 
-        $feature = Feature::whereSlug($featureSlug)->firstOrFail();
+            $feature = Feature::whereSlug($featureSlug)->firstOrFail();
 
-        $subscription->plan->features()->where('feature_id', $feature->id)->firstOrFail();
+            $subscription->plan->features()->where('feature_id', $feature->id)->firstOrFail();
 
-        $usage = $subscription->usages()->where('feature_id', $feature->id)->first();
+            $usage = $subscription->usages()->where('feature_id', $feature->id)->first();
 
-        if (!$usage) {
-            $this->isANewFeatureOrLogicException($subscription, $feature);
-            $usage = $subscription->usages()->create([
-                'used' => $uses,
-                'feature_id' => $feature->id
+            if (!$usage) {
+                $this->isANewFeatureOrLogicException($subscription, $feature);
+                $usage = $subscription->usages()->create([
+                    'used' => $uses,
+                    'feature_id' => $feature->id
+                ]);
+                $before = '0';
+            } else {
+                $before = $usage->used;
+                $usage->update(['used' => $usage->used + $uses]);
+            }
+
+            $user = auth()->user();
+
+            if (!$user) {
+                throw new \LogicException('Authenticated user is required');
+            }
+
+            $usage->activities()->create([
+                'description' => "incremented {$uses} {$feature->name}",
+                'changes' => [
+                    'before' => $before,
+                    'after' => $usage->fresh()->used
+                ],
+                'causeable_id' => $user->id,
+                'causeable_type' => get_class($user)
             ]);
-            $before = '0';
-        } else {
-            $before = $usage->used;
-            $usage->update(['used' => $usage->used + $uses]);
-        }
-
-        $user = auth()->user();
-
-        if (!$user) {
-            throw new \LogicException('Authenticated user is required');
-        }
-
-        $usage->activities()->create([
-            'description' => "incremented {$uses} {$feature->name}",
-            'changes' => [
-                'before' => $before,
-                'after' => $usage->fresh()->used
-            ],
-            'causeable_id' => $user->id,
-            'causeable_type' => get_class($user)
-        ]);
+        });
     }
 
     /**
@@ -151,39 +166,41 @@ trait Subscribable
      */
     public function decrementUse(string $featureSlug, int $uses = 1): void
     {
-        $subscription = $this->currentSubscription();
+        DB::transaction(function () use ($featureSlug, $uses) {
+            $subscription = $this->currentSubscription();
 
-        $this->ifActiveSubscriptionOrLogicException($subscription);
+            $this->ifActiveSubscriptionOrLogicException($subscription);
 
-        $feature = Feature::whereSlug($featureSlug)->firstOrFail();
+            $feature = Feature::whereSlug($featureSlug)->firstOrFail();
 
-        $subscription->plan->features()->where('feature_id', $feature->id)->firstOrFail();
+            $subscription->plan->features()->where('feature_id', $feature->id)->firstOrFail();
 
-        $usage = $subscription->usages()->where('feature_id', $feature->id)->firstOrFail();
+            $usage = $subscription->usages()->where('feature_id', $feature->id)->firstOrFail();
 
-        $newUsed = $usage->used - $uses;
+            $newUsed = $usage->used - $uses;
 
-        $used = (int)($newUsed) < 0 ? '1' : $newUsed;
+            $used = (int)($newUsed) < 0 ? '1' : $newUsed;
 
-        $before = $usage->used;
+            $before = $usage->used;
 
-        $usage->update(['used' => $used]);
+            $usage->update(['used' => $used]);
 
-        $user = auth()->user();
+            $user = auth()->user();
 
-        if (!$user) {
-            throw new \LogicException('Authenticated user is required');
-        }
+            if (!$user) {
+                throw new \LogicException('Authenticated user is required');
+            }
 
-        $usage->activities()->create([
-            'description' => "decremented {$uses} {$feature->name}",
-            'changes' => [
-                'before' => $before,
-                'after' => $usage->fresh()->used
-            ],
-            'causeable_id' => $user->id,
-            'causeable_type' => get_class($user)
-        ]);
+            $usage->activities()->create([
+                'description' => "decremented {$uses} {$feature->name}",
+                'changes' => [
+                    'before' => $before,
+                    'after' => $usage->fresh()->used
+                ],
+                'causeable_id' => $user->id,
+                'causeable_type' => get_class($user)
+            ]);
+        });
     }
 
     /**

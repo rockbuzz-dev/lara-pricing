@@ -70,8 +70,8 @@ class SubscribableTest extends TestCase
         $plan = $this->create(Plan::class);
 
         $this->create(Subscription::class, [
-            'created_at' => now()->subSecond(),
-            'start_at' => now()->subSecond(),
+            'created_at' => now()->subMinute(),
+            'start_at' => now()->subMinute(),
             'finish_at' => null,
             'canceled_at' => null,
             'plan_id' => $plan->id,
@@ -95,8 +95,12 @@ class SubscribableTest extends TestCase
         Event::fake([ChangePlan::class]);
         $subscribable = $this->create(Workspace::class);
         $plan = $this->create(Plan::class);
+        $feature1 = $this->create(Feature::class);
+        $feature2 = $this->create(Feature::class);
+        $plan->features()->attach([$feature1->id => ['value' => '1']]);
+        $plan->features()->attach([$feature2->id => ['value' => '2']]);
 
-        $this->create(Subscription::class, [
+        $oldSubscription = $this->create(Subscription::class, [
             'created_at' => now()->subSecond(),
             'start_at' => now()->subSecond(),
             'finish_at' => null,
@@ -106,11 +110,28 @@ class SubscribableTest extends TestCase
             'subscribable_type' => Workspace::class,
         ]);
 
+        $this->signIn();
+
+        $subscribable->incrementUse($feature1->slug);
+        $subscribable->incrementUse($feature2->slug);
+        $subscribable->incrementUse($feature2->slug);
+
         $newPlan = $this->create(Plan::class);
 
         $this->assertTrue($subscribable->changePlan($newPlan));
 
         $currentSubscription = $subscribable->currentSubscription();
+
+        $this->assertDatabaseHas('subscription_usages', [
+            'used' => 1,
+            'feature_id' => $feature1->id,
+            'subscription_id' => $currentSubscription->id
+        ]);
+        $this->assertDatabaseHas('subscription_usages', [
+            'used' => 2,
+            'feature_id' => $feature2->id,
+            'subscription_id' => $currentSubscription->id
+        ]);
 
         Event::assertDispatched(ChangePlan::class, function ($e) use ($currentSubscription) {
             return $e->subscription->id === $currentSubscription->id;
