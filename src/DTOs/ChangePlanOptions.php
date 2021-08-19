@@ -1,10 +1,10 @@
-<?php 
+<?php
 
 namespace Rockbuzz\LaraPricing\DTOs;
 
 use \DateTime;
 
-class ChangePlanOptions 
+class ChangePlanOptions
 {
     private $subscriptionName;
 
@@ -19,8 +19,7 @@ class ChangePlanOptions
         int $dueDay,
         DateTime $startAt,
         DateTime $finishAt = null
-    )
-    {
+    ) {
         $this->subscriptionName = $subscriptionName;
         $this->dueDay = $dueDay;
         $this->startAt = $startAt;
@@ -29,7 +28,7 @@ class ChangePlanOptions
 
     /**
      * Get the value of subscriptionName
-     */ 
+     */
     public function getSubscriptionName()
     {
         return $this->subscriptionName;
@@ -37,7 +36,7 @@ class ChangePlanOptions
 
     /**
      * Get the value of dueDay
-     */ 
+     */
     public function getDueDay()
     {
         return $this->dueDay;
@@ -45,15 +44,15 @@ class ChangePlanOptions
 
     /**
      * Get the value of startAt
-     */ 
+     */
     public function getStartAt()
     {
-            return $this->startAt;
+        return $this->startAt;
     }
 
     /**
      * Get the value of finishAt
-     */ 
+     */
     public function getFinishAt()
     {
         return $this->finishAt;

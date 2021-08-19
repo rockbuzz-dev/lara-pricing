@@ -49,8 +49,12 @@ class Plan extends Model
 
     public function features()
     {
-        return $this->belongsToMany(config('pricing.models.feature'), config('pricing.models.feature_plan'), 'plan_id', 'feature_id')
-            ->withPivot('value');
+        return $this->belongsToMany(
+            config('pricing.models.feature'),
+            config('pricing.models.feature_plan'),
+            'plan_id',
+            'feature_id'
+        )->withPivot('value');
     }
 
     public function hasFeature(string $featureSlug)

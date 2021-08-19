@@ -174,7 +174,7 @@ class SubscribableTest extends TestCase
 
         $this->assertEquals('0', $subscribable->featureValue($feature->slug));
 
-        DB::table(config('pricing.tables.feature_plan'))->insert([
+        DB::table('feature_plan')->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => '10'
@@ -345,7 +345,7 @@ class SubscribableTest extends TestCase
         $plan->features()->attach([$feature->id => ['value' => '10']]);
 
         $usageId = \Ramsey\Uuid\Uuid::uuid4();
-        DB::table(config('pricing.tables.subscription_usages'))->insert([
+        DB::table('subscription_usages')->insert([
             'id' => $usageId,
             'used' => '5',
             'feature_id' => $feature->id,
@@ -452,7 +452,7 @@ class SubscribableTest extends TestCase
         $plan->features()->attach([$feature->id => ['value' => '10']]);
 
         $usageId = \Ramsey\Uuid\Uuid::uuid4();
-        DB::table(config('pricing.tables.subscription_usages'))->insert([
+        DB::table('subscription_usages')->insert([
             'id' => $usageId,
             'used' => '5',
             'feature_id' => $feature->id,
@@ -478,7 +478,7 @@ class SubscribableTest extends TestCase
         $plan->features()->attach([$feature->id => ['value' => '10']]);
 
         $usageId = \Ramsey\Uuid\Uuid::uuid4();
-        DB::table(config('pricing.tables.subscription_usages'))->insert([
+        DB::table('subscription_usages')->insert([
             'id' => $usageId,
             'used' => '5',
             'feature_id' => $feature->id,
@@ -715,7 +715,7 @@ class SubscribableTest extends TestCase
             'subscribable_type' => Workspace::class,
         ]);
 
-        DB::table(config('pricing.tables.feature_plan'))->insert([
+        DB::table('feature_plan')->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => '10'
@@ -751,7 +751,7 @@ class SubscribableTest extends TestCase
             'subscribable_type' => Workspace::class,
         ]);
 
-        DB::table(config('pricing.tables.feature_plan'))->insert([
+        DB::table('feature_plan')->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => '10'

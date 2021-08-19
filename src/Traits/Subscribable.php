@@ -61,7 +61,6 @@ trait Subscribable
             ]);
     
             if ($currentSubscription) {
-    
                 $oldSubscription->usages->each(function ($usage) use ($currentSubscription) {
                     $currentSubscription->usages()->create([
                         'used' => $usage->used,
@@ -285,8 +284,7 @@ trait Subscribable
     protected function isANewFeatureOrLogicException(
         Subscription $subscription,
         Feature $feature
-    ): void
-    {
+    ): void {
         //subscription >= feature
         if ($subscription->created_at->gte($feature->created_at)) {
             throw new LogicException(

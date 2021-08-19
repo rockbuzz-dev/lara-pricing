@@ -13,9 +13,7 @@ class CreatePricingTables extends Migration
      */
     public function up()
     {
-        $tables = $this->getConfigTables();
-
-        Schema::create($tables['plans'], function (Blueprint $table) {
+        Schema::create('plans', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name')->unique();
             $table->string('slug')->unique();
@@ -29,7 +27,7 @@ class CreatePricingTables extends Migration
             $table->softDeletes();
         });
 
-        Schema::create($tables['features'], function (Blueprint $table) {
+        Schema::create('features', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name')->unique();
             $table->string('slug')->unique();
@@ -38,22 +36,22 @@ class CreatePricingTables extends Migration
             $table->softDeletes();
         });
 
-        Schema::create($tables['feature_plan'], function (Blueprint $table) use ($tables) {
+        Schema::create('feature_plan', function (Blueprint $table) {
             $table->uuid('feature_id')->index();
             $table->foreign('feature_id')
                 ->references('id')
-                ->on($tables['features'])
+                ->on('features')
                 ->onDelete('cascade');
             $table->uuid('plan_id')->index();
             $table->foreign('plan_id')
                 ->references('id')
-                ->on($tables['plans'])
+                ->on('plans')
                 ->onDelete('cascade');
             $table->string('value');
             $table->unique(['feature_id', 'plan_id']);
         });
 
-        Schema::create($tables['subscriptions'], function (Blueprint $table) use ($tables) {
+        Schema::create('subscriptions', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
             $table->string('slug');
@@ -66,25 +64,25 @@ class CreatePricingTables extends Migration
             $table->uuid('plan_id')->index();
             $table->foreign('plan_id')
                 ->references('id')
-                ->on($tables['plans'])
+                ->on('plans')
                 ->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
             $table->index(['subscribable_id', 'subscribable_type', 'plan_id'], 'subscribable_plan');
         });
 
-        Schema::create($tables['subscription_usages'], function (Blueprint $table) use ($tables) {
+        Schema::create('subscription_usages', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->smallInteger('used');
             $table->uuid('feature_id')->index();
             $table->foreign('feature_id')
                 ->references('id')
-                ->on($tables['features'])
+                ->on('features')
                 ->onDelete('cascade');
             $table->uuid('subscription_id')->index();
             $table->foreign('subscription_id')
                 ->references('id')
-                ->on($tables['subscriptions'])
+                ->on('subscriptions')
                 ->onDelete('cascade');
             $table->json('metadata')->nullable();
             $table->timestamps();
@@ -93,7 +91,7 @@ class CreatePricingTables extends Migration
             $table->index(['feature_id', 'subscription_id']);
         });
 
-        Schema::create($tables['pricing_activities'], function (Blueprint $table) {
+        Schema::create('pricing_activities', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('description');
             $table->json('changes')->nullable();
@@ -116,18 +114,11 @@ class CreatePricingTables extends Migration
      */
     public function down()
     {
-        $tables = $this->getConfigTables();
-
-        Schema::dropIfExists($tables['pricing_activities']);
-        Schema::dropIfExists($tables['subscription_usages']);
-        Schema::dropIfExists($tables['subscriptions']);
-        Schema::dropIfExists($tables['feature_plan']);
-        Schema::dropIfExists($tables['features']);
-        Schema::dropIfExists($tables['plans']);
-    }
-
-    private function getConfigTables(): array
-    {
-        return config('pricing.tables');
+        Schema::dropIfExists('pricing_activities');
+        Schema::dropIfExists('subscription_usages');
+        Schema::dropIfExists('subscriptions');
+        Schema::dropIfExists('feature_plan');
+        Schema::dropIfExists('features');
+        Schema::dropIfExists('plans');
     }
 }

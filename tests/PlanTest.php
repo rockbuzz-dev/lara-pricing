@@ -2,12 +2,13 @@
 
 namespace Tests;
 
+use Spatie\Sluggable\HasSlug;
 use Rockbuzz\LaraUuid\Traits\Uuid;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Rockbuzz\LaraPricing\Models\{Plan, Feature};
 use Rockbuzz\LaraPricing\Enums\PlanFeatureValue;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Rockbuzz\LaraPricing\Models\{Plan, Feature};
-use Spatie\Sluggable\HasSlug;
 
 class PlanTest extends TestCase
 {
@@ -86,7 +87,7 @@ class PlanTest extends TestCase
         $plan = $this->create(Plan::class);
         $feature = $this->create(Feature::class);
 
-        \DB::table(config('pricing.tables.feature_plan'))->insert([
+        DB::table('feature_plan')->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => PlanFeatureValue::POSITIVE
@@ -103,7 +104,7 @@ class PlanTest extends TestCase
 
         $this->assertFalse($plan->hasFeature($feature->slug));
 
-        \DB::table(config('pricing.tables.feature_plan'))->insert([
+        DB::table('feature_plan')->insert([
             'feature_id' => $feature->id,
             'plan_id' => $plan->id,
             'value' => PlanFeatureValue::POSITIVE
