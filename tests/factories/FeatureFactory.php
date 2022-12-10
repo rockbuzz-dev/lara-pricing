@@ -10,6 +10,6 @@ $factory->define(Feature::class, function (Faker $faker) {
     return [
         'name' => $name,
         'slug' => \Str::slug($name),
-        'sort_order' => array_rand([1,5,10])
+        'order_column' => array_rand([1,5,10])
     ];
 });

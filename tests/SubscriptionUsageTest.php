@@ -3,7 +3,7 @@
 namespace Tests\Unit;
 
 use Tests\TestCase;
-use Rockbuzz\LaraUuid\Traits\Uuid;
+use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Rockbuzz\LaraPricing\Traits\Activityable;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -34,16 +34,6 @@ class SubscriptionUsageTest extends TestCase
         );
     }
 
-    public function testIncrementing()
-    {
-        $this->assertFalse($this->signature->incrementing);
-    }
-
-    public function testKeyType()
-    {
-        $this->assertEquals('string', $this->signature->getKeyType());
-    }
-
     public function testFillable()
     {
         $expected = [
@@ -59,7 +49,7 @@ class SubscriptionUsageTest extends TestCase
     public function testCasts()
     {
         $expected = [
-            'id' => 'string',
+            'id' => 'int',
             'metadata' => 'array'
         ];
 

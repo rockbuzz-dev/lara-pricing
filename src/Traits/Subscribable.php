@@ -211,7 +211,7 @@ trait Subscribable
 
         if ($feature) {
             $subscription = $this->currentSubscription();
-
+            
             $this->ifActiveSubscriptionOrLogicException($subscription);
 
             if (!$subscription->relationLoaded('usages')) {
@@ -219,7 +219,7 @@ trait Subscribable
             }
 
             foreach ($subscription->usages as $usage) {
-                if ($usage->feature_id === $feature->id) {
+                if ((int)$usage->feature_id === $feature->id) {
                     return (int) $usage->used;
                 }
             }

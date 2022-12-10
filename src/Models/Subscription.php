@@ -2,7 +2,7 @@
 
 namespace Rockbuzz\LaraPricing\Models;
 
-use Rockbuzz\LaraUuid\Traits\Uuid;
+use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphTo};
 use Spatie\Sluggable\HasSlug;
@@ -15,10 +15,6 @@ use Rockbuzz\LaraPricing\Events\{SubscriptionCanceled,
 class Subscription extends Model
 {
     use Uuid, SoftDeletes, HasSlug;
-
-    public $incrementing = false;
-
-    protected $keyType = 'string';
 
     protected $fillable = [
         'name',
@@ -33,7 +29,6 @@ class Subscription extends Model
     ];
 
     protected $casts = [
-        'id' => 'string',
         'due_date' => 'date'
     ];
 

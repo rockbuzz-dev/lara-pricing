@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use Tests\TestCase;
 use Tests\Models\User;
-use Rockbuzz\LaraUuid\Traits\Uuid;
+use Rockbuzz\LaraPricing\Traits\Uuid;
 use Rockbuzz\LaraPricing\Models\PricingActivity;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
@@ -17,28 +17,6 @@ class PricingActivityTest extends TestCase
         parent::setUp();
 
         $this->signature = new PricingActivity();
-    }
-
-    public function testIfUsesTraits()
-    {
-        $expected = [
-            Uuid::class
-        ];
-
-        $this->assertEquals(
-            $expected,
-            array_values(class_uses(PricingActivity::class))
-        );
-    }
-
-    public function testIncrementing()
-    {
-        $this->assertFalse($this->signature->incrementing);
-    }
-
-    public function testKeyType()
-    {
-        $this->assertEquals('string', $this->signature->getKeyType());
     }
 
     public function testFillable()
@@ -58,7 +36,7 @@ class PricingActivityTest extends TestCase
     public function testCasts()
     {
         $expected = [
-            'id' => 'string',
+            'id' => 'int',
             'changes' => 'array',
             'created_at' => 'datetime'
         ];

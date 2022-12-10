@@ -4,16 +4,12 @@ namespace Rockbuzz\LaraPricing\Models;
 
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
-use Rockbuzz\LaraUuid\Traits\Uuid;
+use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
 class Plan extends Model
 {
     use Uuid, SoftDeletes, HasSlug;
-
-    public $incrementing = false;
-
-    protected $keyType = 'string';
 
     protected $fillable = [
         'name',
@@ -23,15 +19,14 @@ class Plan extends Model
         'interval',
         'period',
         'trial_period_days',
-        'sort_order'
+        'order_column'
     ];
 
     protected $casts = [
-        'id' => 'string',
         'price' => 'integer',
         'period' => 'integer',
         'trial_period_days' => 'integer',
-        'sort_order' => 'integer'
+        'order_column' => 'integer'
     ];
 
     protected $dates = [

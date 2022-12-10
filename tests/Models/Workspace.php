@@ -2,22 +2,13 @@
 
 namespace Tests\Models;
 
-use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\Model;
 use Rockbuzz\LaraPricing\Traits\Subscribable;
 use Rockbuzz\LaraPricing\Contracts\Subscribable as SubscribableContract;
 
 class Workspace extends Model implements SubscribableContract
 {
-    use Uuid, Subscribable;
-
-    public $incrementing = false;
-
-    protected $keyType = 'string';
+    use Subscribable;
 
     protected $guarded = [];
-
-    protected $casts = [
-        'id' => 'string',
-    ];
 }

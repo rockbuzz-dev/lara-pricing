@@ -2,17 +2,13 @@
 
 namespace Rockbuzz\LaraPricing\Models;
 
-use Rockbuzz\LaraUuid\Traits\Uuid;
+use Rockbuzz\LaraPricing\Traits\Uuid;
 use Rockbuzz\LaraPricing\Traits\Activityable;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
 class SubscriptionUsage extends Model
 {
     use Uuid, SoftDeletes, Activityable;
-
-    public $incrementing = false;
-
-    protected $keyType = 'string';
 
     protected $fillable = [
         'used',
@@ -22,7 +18,6 @@ class SubscriptionUsage extends Model
     ];
 
     protected $casts = [
-        'id' => 'string',
         'metadata' => 'array'
     ];
 

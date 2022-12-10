@@ -186,7 +186,6 @@ class SubscribableTest extends TestCase
     public function testSubscribableIncrementUseWithInactiveSubscription()
     {
         /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
-        /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
         $subscribable = $this->create(Workspace::class);
 
         $this->create(Subscription::class, [
@@ -344,9 +343,7 @@ class SubscribableTest extends TestCase
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
         $plan->features()->attach([$feature->id => ['value' => '10']]);
 
-        $usageId = \Ramsey\Uuid\Uuid::uuid4();
-        DB::table('subscription_usages')->insert([
-            'id' => $usageId,
+        $usage = $this->create(SubscriptionUsage::class, [
             'used' => '5',
             'feature_id' => $feature->id,
             'subscription_id' => $subscription->id,
@@ -362,8 +359,6 @@ class SubscribableTest extends TestCase
             'feature_id' => $feature->id,
             'subscription_id' => $subscription->id
         ]);
-
-        $usage = SubscriptionUsage::findOrFail($usageId);
 
         $this->assertCount(1, $usage->activities);
         $this->assertDatabaseHas('pricing_activities', [
@@ -451,9 +446,7 @@ class SubscribableTest extends TestCase
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
         $plan->features()->attach([$feature->id => ['value' => '10']]);
 
-        $usageId = \Ramsey\Uuid\Uuid::uuid4();
-        DB::table('subscription_usages')->insert([
-            'id' => $usageId,
+        $this->create(SubscriptionUsage::class, [
             'used' => '5',
             'feature_id' => $feature->id,
             'subscription_id' => $subscription->id,
@@ -477,9 +470,7 @@ class SubscribableTest extends TestCase
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
         $plan->features()->attach([$feature->id => ['value' => '10']]);
 
-        $usageId = \Ramsey\Uuid\Uuid::uuid4();
-        DB::table('subscription_usages')->insert([
-            'id' => $usageId,
+        $usage = $this->create(SubscriptionUsage::class, [
             'used' => '5',
             'feature_id' => $feature->id,
             'subscription_id' => $subscription->id,
@@ -503,8 +494,6 @@ class SubscribableTest extends TestCase
             'feature_id' => $feature->id,
             'subscription_id' => $subscription->id
         ]);
-
-        $usage = SubscriptionUsage::findOrFail($usageId);
 
         $this->assertCount(2, $usage->activities);
         $this->assertDatabaseHas('pricing_activities', [

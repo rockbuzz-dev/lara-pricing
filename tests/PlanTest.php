@@ -3,7 +3,7 @@
 namespace Tests;
 
 use Spatie\Sluggable\HasSlug;
-use Rockbuzz\LaraUuid\Traits\Uuid;
+use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Rockbuzz\LaraPricing\Models\{Plan, Feature};
@@ -35,16 +35,6 @@ class PlanTest extends TestCase
         );
     }
 
-    public function testIncrementing()
-    {
-        $this->assertFalse($this->plan->incrementing);
-    }
-
-    public function testKeyType()
-    {
-        $this->assertEquals('string', $this->plan->getKeyType());
-    }
-
     public function testFillable()
     {
         $expected = [
@@ -55,7 +45,7 @@ class PlanTest extends TestCase
             'interval',
             'period',
             'trial_period_days',
-            'sort_order'
+            'order_column'
         ];
 
         $this->assertEquals($expected, $this->plan->getFillable());
@@ -64,11 +54,11 @@ class PlanTest extends TestCase
     public function testCasts()
     {
         $expected = [
-            'id' => 'string',
+            'id' => 'int',
             'price' => 'integer',
             'period' => 'integer',
             'trial_period_days' => 'integer',
-            'sort_order' => 'integer'
+            'order_column' => 'integer'
         ];
 
         $this->assertEquals($expected, $this->plan->getCasts());

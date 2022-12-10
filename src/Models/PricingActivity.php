@@ -2,18 +2,11 @@
 
 namespace Rockbuzz\LaraPricing\Models;
 
-use Rockbuzz\LaraUuid\Traits\Uuid;
 use Illuminate\Database\Eloquent\Model;
 
 class PricingActivity extends Model
 {
-    use Uuid;
-
-    public $incrementing = false;
-
     public $timestamps = false;
-
-    protected $keyType = 'string';
 
     protected $fillable = [
         'description',
@@ -25,7 +18,6 @@ class PricingActivity extends Model
     ];
 
     protected $casts = [
-        'id' => 'string',
         'changes' => 'array',
         'created_at' => 'datetime'
     ];
@@ -36,7 +28,6 @@ class PricingActivity extends Model
 
         $this->setTable(config('pricing.tables.pricing_activities'));
     }
-
 
     public function causer()
     {

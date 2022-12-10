@@ -4,25 +4,17 @@ namespace Rockbuzz\LaraPricing\Models;
 
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
-use Rockbuzz\LaraUuid\Traits\Uuid;
+use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 
 class Feature extends Model
 {
     use Uuid, SoftDeletes, HasSlug;
 
-    public $incrementing = false;
-
-    protected $keyType = 'string';
-
     protected $fillable = [
         'name',
         'slug',
-        'sort_order'
-    ];
-
-    protected $casts = [
-        'id' => 'string'
+        'order_column'
     ];
 
     protected $dates = [

@@ -4,7 +4,7 @@ namespace Tests\Models;
 
 use Tests\TestCase;
 use Spatie\Sluggable\HasSlug;
-use Rockbuzz\LaraUuid\Traits\Uuid;
+use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Rockbuzz\LaraPricing\Models\Feature;
 
@@ -33,22 +33,12 @@ class FeatureTest extends TestCase
         );
     }
 
-    public function testIncrementing()
-    {
-        $this->assertFalse($this->feature->incrementing);
-    }
-
-    public function testKeyType()
-    {
-        $this->assertEquals('string', $this->feature->getKeyType());
-    }
-
     public function testFillable()
     {
         $expected = [
             'name',
             'slug',
-            'sort_order'
+            'order_column'
         ];
 
         $this->assertEquals($expected, $this->feature->getFillable());
@@ -56,7 +46,7 @@ class FeatureTest extends TestCase
 
     public function testCasts()
     {
-        $expected = ['id' => 'string'];
+        $expected = ['id' => 'int'];
 
         $this->assertEquals($expected, $this->feature->getCasts());
     }

@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use Tests\TestCase;
 use Spatie\Sluggable\HasSlug;
-use Rockbuzz\LaraUuid\Traits\Uuid;
+use Rockbuzz\LaraPricing\Traits\Uuid;
 use Tests\Models\{User, Workspace};
 use Illuminate\Support\Facades\Event;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -40,16 +40,6 @@ class SubscriptionTest extends TestCase
         );
     }
 
-    public function testIncrementing()
-    {
-        $this->assertFalse($this->subscription->incrementing);
-    }
-
-    public function testKeyType()
-    {
-        $this->assertEquals('string', $this->subscription->getKeyType());
-    }
-
     public function testFillable()
     {
         $expected = [
@@ -70,7 +60,7 @@ class SubscriptionTest extends TestCase
     public function testCasts()
     {
         $expected = [
-            'id' => 'string',
+            'id' => 'int',
             'due_date' => 'date'
         ];
 

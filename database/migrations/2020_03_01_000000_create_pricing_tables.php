@@ -14,7 +14,8 @@ class CreatePricingTables extends Migration
     public function up()
     {
         Schema::create('plans', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->bigIncrements('id');
+            $table->uuid('uuid');
             $table->string('name')->unique();
             $table->string('slug')->unique();
             $table->text('description')->nullable();
@@ -22,27 +23,28 @@ class CreatePricingTables extends Migration
             $table->string('interval')->default('month');
             $table->smallInteger('period')->default(1);
             $table->smallInteger('trial_period_days')->default(0);
-            $table->smallInteger('sort_order')->default(1);
+            $table->smallInteger('order_column')->default(1);
             $table->timestamps();
             $table->softDeletes();
         });
 
         Schema::create('features', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->bigIncrements('id');
+            $table->uuid('uuid');
             $table->string('name')->unique();
             $table->string('slug')->unique();
-            $table->smallInteger('sort_order')->default(1);
+            $table->smallInteger('order_column')->default(1);
             $table->timestamps();
             $table->softDeletes();
         });
 
         Schema::create('feature_plan', function (Blueprint $table) {
-            $table->uuid('feature_id')->index();
+            $table->unsignedBigInteger('feature_id')->index();
             $table->foreign('feature_id')
                 ->references('id')
                 ->on('features')
                 ->onDelete('cascade');
-            $table->uuid('plan_id')->index();
+            $table->unsignedBigInteger('plan_id')->index();
             $table->foreign('plan_id')
                 ->references('id')
                 ->on('plans')
@@ -52,7 +54,8 @@ class CreatePricingTables extends Migration
         });
 
         Schema::create('subscriptions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->bigIncrements('id');
+            $table->uuid('uuid');
             $table->string('name');
             $table->string('slug');
             $table->dateTime('start_at')->useCurrent();
@@ -61,7 +64,7 @@ class CreatePricingTables extends Migration
             $table->string('due_day')->nullable();
             $table->uuid('subscribable_id');
             $table->string('subscribable_type');
-            $table->uuid('plan_id')->index();
+            $table->unsignedBigInteger('plan_id')->index();
             $table->foreign('plan_id')
                 ->references('id')
                 ->on('plans')
@@ -72,14 +75,15 @@ class CreatePricingTables extends Migration
         });
 
         Schema::create('subscription_usages', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->bigIncrements('id');
+            $table->uuid('uuid');
             $table->smallInteger('used');
-            $table->uuid('feature_id')->index();
+            $table->unsignedBigInteger('feature_id')->index();
             $table->foreign('feature_id')
                 ->references('id')
                 ->on('features')
                 ->onDelete('cascade');
-            $table->uuid('subscription_id')->index();
+            $table->unsignedBigInteger('subscription_id')->index();
             $table->foreign('subscription_id')
                 ->references('id')
                 ->on('subscriptions')
@@ -92,12 +96,12 @@ class CreatePricingTables extends Migration
         });
 
         Schema::create('pricing_activities', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->bigIncrements('id');
             $table->string('description');
             $table->json('changes')->nullable();
-            $table->uuid('activityable_id')->index();
+            $table->unsignedBigInteger('activityable_id')->index();
             $table->string('activityable_type');
-            $table->uuid('causeable_id')->index();
+            $table->unsignedBigInteger('causeable_id')->index();
             $table->string('causeable_type');
             $table->dateTime('created_at')->useCurrent();
             $table->index(

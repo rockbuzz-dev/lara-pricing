@@ -15,6 +15,6 @@ $factory->define(Plan::class, function (Faker $faker) {
         'interval' => 'month',
         'period' => 1,
         'trial_period_days' => 0,
-        'sort_order' => 1
+        'order_column' => 1
     ];
 });
