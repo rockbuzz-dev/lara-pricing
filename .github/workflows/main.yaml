@@ -1,0 +1,20 @@
+name: Main
+on: push
+
+jobs: 
+  build:
+    name: Main
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ./.github/actions/composer
+      - uses: ./.github/actions/ci
+    services:
+      dbeventpeople:
+        image: mariadb:10.3
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: testing
+          MYSQL_USER: testing
+          MYSQL_PASSWORD: secret
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
