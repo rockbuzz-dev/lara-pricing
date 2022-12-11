@@ -2,6 +2,8 @@
 
 Laravel package to manage plan subscriptions with restrictive and limited functionalities.
 
+<p><img src="https://github.com/rockbuzz/lara-pricing/workflows/Main/badge.svg"/></p>
+
 ## Requirements
 
 PHP >=7.3
