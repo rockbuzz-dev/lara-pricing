@@ -11,6 +11,17 @@ use Rockbuzz\LaraPricing\DTOs\ChangePlanOptions;
 interface Subscribable
 {
     /**
+     * @param Plan $plan
+     * @return Subscription
+     */
+    public function subscribe(Plan $plan): Subscription;
+
+    /**
+     * @return void
+     */
+    public function unsubscribe(): void;
+
+    /**
      * @return MorphMany
      */
     public function subscriptions(): MorphMany;
@@ -26,13 +37,6 @@ interface Subscribable
      * @throws ModelNotFoundException
      */
     public function currentPlan(): Plan;
-
-    /**
-     * @param Plan $newPlan
-     * @param ChangePlanOptions|null $options
-     * @return bool
-     */
-    public function changePlan(Plan $newPlan, ChangePlanOptions $options = null): bool;
 
     /**
      * @param string $featureSlug
@@ -82,4 +86,11 @@ interface Subscribable
      * @throws LogicException if the subscription is inactive;
      */
     public function canUse(string $featureSlug): bool;
+
+    /**
+     * @param string $featureSlug
+     * @return bool
+     * @throws LogicException if the subscription is inactive;
+     */
+    public function cleanUse(string $featureSlug): void;
 }

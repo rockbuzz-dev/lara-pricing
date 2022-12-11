@@ -5,31 +5,30 @@ namespace Rockbuzz\LaraPricing\Models;
 use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphTo};
-use Spatie\Sluggable\HasSlug;
-use Spatie\Sluggable\SlugOptions;
 use Rockbuzz\LaraPricing\Events\{SubscriptionCanceled,
+    SubscriptionCancelRecurrence,
     SubscriptionFinished,
     SubscriptionMakeRecurring,
     SubscriptionStarted};
 
 class Subscription extends Model
 {
-    use Uuid, SoftDeletes, HasSlug;
+    use Uuid, SoftDeletes;
 
     protected $fillable = [
-        'name',
-        'slug',
         'start_at',
         'finish_at',
         'canceled_at',
         'due_day',
         'subscribable_id',
         'subscribable_type',
-        'plan_id'
+        'plan_id',
+        'immutable_plan'
     ];
 
     protected $casts = [
-        'due_date' => 'date'
+        'due_day' => 'date',
+        'immutable_plan' => 'array'
     ];
 
     protected $dates = [
@@ -61,13 +60,6 @@ class Subscription extends Model
     public function usages(): HasMany
     {
         return $this->hasMany(config('pricing.models.subscription_usage'), 'subscription_id');
-    }
-
-    public function getSlugOptions(): SlugOptions
-    {
-        return SlugOptions::create()
-            ->generateSlugsFrom('name')
-            ->saveSlugsTo('slug');
     }
 
     public function start()
@@ -127,6 +119,16 @@ class Subscription extends Model
         event(new SubscriptionMakeRecurring($this));
     }
 
+    public function cancelRecurrence()
+    {
+        $plan = $this->plan;
+        $addInterval = $plan->interval === 'month' ? 'addMonths' : 'addYears';
+
+        $this->update(['finish_at' => $this->start_at->{$addInterval}($plan->period)]);
+
+        event(new SubscriptionCancelRecurrence($this));
+    }
+
     public function isRecurrent()
     {
         return is_null($this->finish_at);
@@ -134,7 +136,7 @@ class Subscription extends Model
 
     public function hasTrial()
     {
-        return $this->plan->fresh()->trial_period_days > 0;
+        return $this->trial() > 0;
     }
 
     public function trial()

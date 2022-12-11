@@ -3,7 +3,6 @@
 namespace Tests\Unit;
 
 use Tests\TestCase;
-use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Rockbuzz\LaraPricing\Traits\Activityable;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -23,7 +22,6 @@ class SubscriptionUsageTest extends TestCase
     public function testIfUsesTraits()
     {
         $expected = [
-            Uuid::class,
             SoftDeletes::class,
             Activityable::class,
         ];

@@ -3,14 +3,14 @@
 namespace Tests\Unit;
 
 use Tests\TestCase;
-use Spatie\Sluggable\HasSlug;
-use Rockbuzz\LaraPricing\Traits\Uuid;
-use Tests\Models\{User, Workspace};
+use Tests\Models\{User, Account};
 use Illuminate\Support\Facades\Event;
+use Rockbuzz\LaraPricing\Traits\Uuid;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, MorphTo};
 use Rockbuzz\LaraPricing\Models\{Plan, SubscriptionUsage, Subscription};
 use Rockbuzz\LaraPricing\Events\{SubscriptionCanceled,
+    SubscriptionCancelRecurrence,
     SubscriptionFinished,
     SubscriptionStarted,
     SubscriptionMakeRecurring};
@@ -30,8 +30,7 @@ class SubscriptionTest extends TestCase
     {
         $expected = [
             Uuid::class,
-            SoftDeletes::class,
-            HasSlug::class
+            SoftDeletes::class
         ];
 
         $this->assertEquals(
@@ -43,15 +42,14 @@ class SubscriptionTest extends TestCase
     public function testFillable()
     {
         $expected = [
-            'name',
-            'slug',
             'start_at',
             'finish_at',
             'canceled_at',
             'due_day',
             'subscribable_id',
             'subscribable_type',
-            'plan_id'
+            'plan_id',
+            'immutable_plan'
         ];
 
         $this->assertEquals($expected, $this->subscription->getFillable());
@@ -61,7 +59,8 @@ class SubscriptionTest extends TestCase
     {
         $expected = [
             'id' => 'int',
-            'due_date' => 'date'
+            'due_day' => 'date',
+            'immutable_plan' => 'array'
         ];
 
         $this->assertEquals($expected, $this->subscription->getCasts());
@@ -86,14 +85,14 @@ class SubscriptionTest extends TestCase
 
     public function testSubscriptionHasSubscribable()
     {
-        $workspace = $this->create(Workspace::class);
+        $Account = $this->create(Account::class);
         $subscription = $this->create(Subscription::class, [
-            'subscribable_id' => $workspace->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_id' => $Account->id,
+            'subscribable_type' => Account::class,
         ]);
 
         $this->assertInstanceOf(MorphTo::class, $subscription->subscribable());
-        $this->assertEquals($workspace->id, $subscription->subscribable->id);
+        $this->assertEquals($Account->id, $subscription->subscribable->id);
     }
 
     public function testSubscriptionHasPlan()
@@ -117,16 +116,6 @@ class SubscriptionTest extends TestCase
 
         $this->assertInstanceOf(HasMany::class, $subscription->usages());
         $this->assertContains($usage->id, $subscription->usages->pluck('id'));
-    }
-
-    public function testPricingSubscriptionMustHaveSlug()
-    {
-        $subscription = $this->create(Subscription::class, [
-            'name' => 'Subscription Name',
-            'slug' => null
-        ]);
-
-        $this->assertEquals('subscription-name', $subscription->slug);
     }
 
     public function testSubscriptionStart()
@@ -199,13 +188,15 @@ class SubscriptionTest extends TestCase
         });
     }
 
-    public function testSubscriptionRecurrent()
+    public function testSubscriptionMakeRecurrent()
     {
         Event::fake([SubscriptionMakeRecurring::class]);
 
+        $finish =  now()->subMonths(3);
+
         $subscription = $this->create(Subscription::class, [
             'start_at' => now()->subMonth(),
-            'finish_at' => now()->subMonth(),
+            'finish_at' => $finish,
             'canceled_at' => null
         ]);
 
@@ -216,6 +207,41 @@ class SubscriptionTest extends TestCase
         $this->assertTrue($subscription->isRecurrent());
 
         Event::assertDispatched(SubscriptionMakeRecurring::class, function ($e) use ($subscription) {
+            return $e->subscription->id === $subscription->id;
+        });
+    }
+
+    public function testSubscriptionCancelRecurrent()
+    {
+        Event::fake([SubscriptionCancelRecurrence::class]);
+
+        $now = now();
+        $finish = clone $now;
+
+        $finish->addMonths(3);
+
+        $subscription = $this->create(Subscription::class, [
+            'start_at' => $now,
+            'finish_at' => null,
+            'canceled_at' => null,
+            'plan_id' => $this->create(Plan::class, [
+                'interval' => 'month',
+                'period' => 3
+            ])->id
+        ]);
+
+        $this->assertTrue($subscription->isRecurrent());
+        
+        $subscription->cancelRecurrence();
+        
+        $this->assertFalse($subscription->isRecurrent());
+
+        $this->assertDatabaseHas('subscriptions', [
+            'id' => $subscription->id,
+            'finish_at' => $finish->toDateTimeString()
+        ]);
+
+        Event::assertDispatched(SubscriptionCancelRecurrence::class, function ($e) use ($subscription) {
             return $e->subscription->id === $subscription->id;
         });
     }

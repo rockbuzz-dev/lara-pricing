@@ -2,26 +2,80 @@
 
 namespace Tests;
 
+use Carbon\Carbon;
+use Tests\Models\{User, Account};
 use Illuminate\Support\Facades\DB;
-use Tests\Models\{User, Workspace};
 use Illuminate\Support\Facades\Event;
 use Rockbuzz\LaraPricing\Events\ChangePlan;
 use Rockbuzz\LaraPricing\Enums\PlanFeatureValue;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Rockbuzz\LaraPricing\Events\SubscriptionCanceled;
+use Rockbuzz\LaraPricing\Events\SubscriptionCreated;
 use Rockbuzz\LaraPricing\Models\{Feature, Plan, Subscription, SubscriptionUsage};
 
 class SubscribableTest extends TestCase
 {
+    public function testSubscribableCanSubscribe()
+    {
+        Event::fake([SubscriptionCreated::class]);
+
+        $subscribable = $this->create(Account::class);
+        $plan = $this->create(Plan::class);
+        $feature1 = $this->create(Feature::class);
+        $feature2 = $this->create(Feature::class);
+        $plan->features()->attach([$feature1->id => ['value' => '1']]);
+        $plan->features()->attach([$feature2->id => ['value' => '2']]);
+
+        $subscription = $subscribable->subscribe($plan);
+
+        $this->assertCount(0, $subscription->usages);
+
+        $this->assertDatabaseHas('subscriptions', [
+            'id' => $subscription->id,
+            'immutable_plan' => json_encode($plan->load(['features'])->toArray())
+        ]);
+
+        Event::assertDispatched(SubscriptionCreated::class, function ($e) use ($subscription) {
+            return $e->subscription->id === $subscription->id;
+        });
+    }
+
+    public function testSubscribableCanUnsubscribe()
+    {
+        $now = now();
+        Carbon::setTestNow($now);
+        
+        Event::fake([SubscriptionCanceled::class]);
+
+        $subscribable = $this->create(Account::class);
+
+        $subscription = $this->create(Subscription::class, [
+            'subscribable_id' => $subscribable->id,
+            'subscribable_type' => Account::class
+        ]);
+
+        $subscribable->unsubscribe();
+
+        $this->assertDatabaseHas('subscriptions', [
+            'id' => $subscription->id,
+            'canceled_at' => $now
+        ]);
+
+        Event::assertDispatched(SubscriptionCanceled::class, function ($e) use ($subscription) {
+            return $e->subscription->id === $subscription->id;
+        });
+    }
+
     public function testSubscribableHasSubscriptions()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
 
         $subscription = $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         $this->assertInstanceOf(MorphMany::class, $subscribable->subscriptions());
@@ -30,7 +84,7 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableHasCurrentSubscription()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
 
         $this->create(Subscription::class, [
@@ -40,7 +94,7 @@ class SubscribableTest extends TestCase
             'canceled_at' => null,
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         $subscription = $this->create(Subscription::class, [
@@ -50,7 +104,7 @@ class SubscribableTest extends TestCase
             'canceled_at' => now()->subSecond(),
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         $this->assertEquals($subscription->id, $subscribable->currentSubscription()->id);
@@ -66,7 +120,7 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableHasCurrentPlan()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
 
         $this->create(Subscription::class, [
@@ -76,7 +130,7 @@ class SubscribableTest extends TestCase
             'canceled_at' => null,
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         $this->assertEquals($plan->id, $subscribable->currentPlan()->id);
@@ -90,65 +144,14 @@ class SubscribableTest extends TestCase
         $subscribable->currentPlan();
     }
 
-    public function testSubscribableHasChangePlan()
-    {
-        Event::fake([ChangePlan::class]);
-        $subscribable = $this->create(Workspace::class);
-        $plan = $this->create(Plan::class);
-        $feature1 = $this->create(Feature::class);
-        $feature2 = $this->create(Feature::class);
-        $plan->features()->attach([$feature1->id => ['value' => '1']]);
-        $plan->features()->attach([$feature2->id => ['value' => '2']]);
-
-        $oldSubscription = $this->create(Subscription::class, [
-            'created_at' => now()->subSecond(),
-            'start_at' => now()->subSecond(),
-            'finish_at' => null,
-            'canceled_at' => null,
-            'plan_id' => $plan->id,
-            'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
-        ]);
-
-        $this->signIn();
-
-        $subscribable->incrementUse($feature1->slug);
-        $subscribable->incrementUse($feature2->slug);
-        $subscribable->incrementUse($feature2->slug);
-
-        $newPlan = $this->create(Plan::class);
-
-        $this->assertTrue($subscribable->changePlan($newPlan));
-
-        $currentSubscription = $subscribable->currentSubscription();
-
-        $this->assertDatabaseHas('subscription_usages', [
-            'used' => 1,
-            'feature_id' => $feature1->id,
-            'subscription_id' => $currentSubscription->id
-        ]);
-        $this->assertDatabaseHas('subscription_usages', [
-            'used' => 2,
-            'feature_id' => $feature2->id,
-            'subscription_id' => $currentSubscription->id
-        ]);
-
-        Event::assertDispatched(ChangePlan::class, function ($e) use ($currentSubscription) {
-            return $e->subscription->id === $currentSubscription->id;
-        });
-
-        $this->assertNotEquals($plan->id, $subscribable->currentPlan()->id);
-        $this->assertEquals($newPlan->id, $subscribable->currentPlan()->id);
-    }
-
     public function testSubscribableFeatureEnabled()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, ['name' => 'Trails', 'slug' => 'trails']);
         $plan->features()->attach([$feature->id => ['value' => PlanFeatureValue::POSITIVE]]);
@@ -162,14 +165,14 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableFeatureValue()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $feature = $this->create(Feature::class);
 
         $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         $this->assertEquals('0', $subscribable->featureValue($feature->slug));
@@ -186,12 +189,12 @@ class SubscribableTest extends TestCase
     public function testSubscribableIncrementUseWithInactiveSubscription()
     {
         /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
 
         $this->create(Subscription::class, [
             'canceled_at' => now()->subSecond(),
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         $this->expectException(\LogicException::class);
@@ -203,7 +206,7 @@ class SubscribableTest extends TestCase
     public function testSubscribableIncrementUseWithoutFeature()
     {
         /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
 
         $this->expectException(ModelNotFoundException::class);
 
@@ -213,12 +216,12 @@ class SubscribableTest extends TestCase
     public function testSubscribableIncrementUseWithoutFeatureInPlan()
     {
         /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
 
@@ -229,7 +232,7 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableIncrementUseMustThrowExceptionWhenWithoutFeatureUsage()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $createdSubscription = now();
         $this->create(Subscription::class, [
@@ -239,7 +242,7 @@ class SubscribableTest extends TestCase
             'finish_at' => now()->addMonth(),
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, [
             'name' => 'Users',
@@ -258,7 +261,7 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableIncrementUseMustThrowExceptionWhenWithoutAuthenticatedUser()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
             'created_at' => now(),
@@ -267,7 +270,7 @@ class SubscribableTest extends TestCase
             'finish_at' => now()->addMonth(),
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, [
             'name' => 'Users',
@@ -284,7 +287,7 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableIncrementUseWithoutFeatureUsage()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $createdSubscription = now();
         $subscription = $this->create(Subscription::class, [
@@ -294,7 +297,7 @@ class SubscribableTest extends TestCase
             'finish_at' => now()->addMonth(),
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, [
             'name' => 'Users',
@@ -330,7 +333,7 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableIncrementUseWithFeatureUsage()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $subscription = $this->create(Subscription::class, [
             'start_at' => now()->subDay(),
@@ -338,7 +341,7 @@ class SubscribableTest extends TestCase
             'finish_at' => now()->addMonth(),
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
         $plan->features()->attach([$feature->id => ['value' => '10']]);
@@ -375,11 +378,11 @@ class SubscribableTest extends TestCase
     public function testSubscribableDecrementUseWithInactiveSubscription()
     {
         /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $this->create(Subscription::class, [
             'canceled_at' => now()->subSecond(),
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         $this->expectException(\LogicException::class);
@@ -391,7 +394,7 @@ class SubscribableTest extends TestCase
     public function testSubscribableDecrementUseWithoutFeature()
     {
         /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
 
         $this->expectException(ModelNotFoundException::class);
 
@@ -401,12 +404,12 @@ class SubscribableTest extends TestCase
     public function testSubscribableDecrementUseWithoutFeatureInPlan()
     {
         /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
 
@@ -418,12 +421,12 @@ class SubscribableTest extends TestCase
     public function testSubscribableDecrementUseWithoutFeatureUsage()
     {
         /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
         $plan->features()->attach([$feature->id => ['value' => '10']]);
@@ -436,12 +439,12 @@ class SubscribableTest extends TestCase
     public function testSubscribableDecrementUseWithoutAuthenticatedUser()
     {
         /**@var \Rockbuzz\LaraPricing\Contracts\Subscribable $subscribable **/
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $subscription = $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
         $plan->features()->attach([$feature->id => ['value' => '10']]);
@@ -460,12 +463,12 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableDecrementUse()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $subscription = $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
         $plan->features()->attach([$feature->id => ['value' => '10']]);
@@ -518,11 +521,11 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableConsumedUseWithInactiveSubscription()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $this->create(Subscription::class, [
             'finish_at' => now()->subSecond(),
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
 
@@ -534,12 +537,12 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableConsumedUse()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $subscription = $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
         $plan->features()->attach([$feature->id => ['value' => '10']]);
@@ -560,13 +563,13 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableRemainingUseWithInactiveSubscription()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'finish_at' => now()->subSecond(),
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
         $plan->features()->attach([$feature->id => ['value' => '10']]);
@@ -579,12 +582,12 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableRemainingUse()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $subscription = $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
         $plan->features()->attach([$feature->id => ['value' => '10']]);
@@ -599,12 +602,12 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableCanUseWithoutFeatureInPlan()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         $this->assertFalse($subscribable->canUse('trails'));
@@ -612,12 +615,12 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableCanUseWithFeatureEnabled()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
         $feature = $this->create(Feature::class, ['name' => 'Trails', 'slug' => 'trails']);
 
@@ -632,12 +635,12 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableCanUseWithFeatureValueZero()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
@@ -649,12 +652,12 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableCanUseWithFeatureConsumed()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $subscription = $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
@@ -674,13 +677,13 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableCanUseWithInactiveSubscription()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $this->create(Subscription::class, [
             'finish_at' => now()->subSecond(),
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         $feature = $this->create(Feature::class, ['name' => 'Users', 'slug' => 'users']);
@@ -694,14 +697,14 @@ class SubscribableTest extends TestCase
 
     public function testSubscribableRemoveUse()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $feature = $this->create(Feature::class);
 
         $subscription = $this->create(Subscription::class, [
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         DB::table('feature_plan')->insert([
@@ -722,14 +725,14 @@ class SubscribableTest extends TestCase
 
         $this->assertCount(1, $subscription->fresh()->usages);
 
-        $subscribable->removeUse($feature->slug);
+        $subscribable->cleanUse($feature->slug);
 
         $this->assertCount(0, $subscription->fresh()->usages);
     }
 
     public function testSubscribableRemoveUseWithInactiveSubscription()
     {
-        $subscribable = $this->create(Workspace::class);
+        $subscribable = $this->create(Account::class);
         $plan = $this->create(Plan::class);
         $feature = $this->create(Feature::class);
 
@@ -737,7 +740,7 @@ class SubscribableTest extends TestCase
             'finish_at' => now()->subSecond(),
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,
-            'subscribable_type' => Workspace::class,
+            'subscribable_type' => Account::class,
         ]);
 
         DB::table('feature_plan')->insert([
@@ -752,6 +755,6 @@ class SubscribableTest extends TestCase
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('You cannot perform this action with an inactive subscription');
 
-        $subscribable->removeUse($feature->slug);
+        $subscribable->cleanUse($feature->slug);
     }
 }

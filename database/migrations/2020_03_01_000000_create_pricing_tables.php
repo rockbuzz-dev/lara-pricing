@@ -56,8 +56,6 @@ class CreatePricingTables extends Migration
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->uuid('uuid');
-            $table->string('name');
-            $table->string('slug');
             $table->dateTime('start_at')->useCurrent();
             $table->dateTime('finish_at')->nullable();
             $table->dateTime('canceled_at')->nullable();
@@ -69,6 +67,7 @@ class CreatePricingTables extends Migration
                 ->references('id')
                 ->on('plans')
                 ->onDelete('cascade');
+            $table->json('immutable_plan')->nullable();
             $table->timestamps();
             $table->softDeletes();
             $table->index(['subscribable_id', 'subscribable_type', 'plan_id'], 'subscribable_plan');
@@ -76,7 +75,6 @@ class CreatePricingTables extends Migration
 
         Schema::create('subscription_usages', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->uuid('uuid');
             $table->smallInteger('used');
             $table->unsignedBigInteger('feature_id')->index();
             $table->foreign('feature_id')

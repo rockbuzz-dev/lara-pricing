@@ -8,10 +8,35 @@ use Illuminate\Support\Facades\DB;
 use Rockbuzz\LaraPricing\Events\ChangePlan;
 use Rockbuzz\LaraPricing\DTOs\ChangePlanOptions;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Rockbuzz\LaraPricing\Events\SubscriptionCreated;
 use Rockbuzz\LaraPricing\Models\{Feature, Plan, Subscription};
 
 trait Subscribable
 {
+    /**
+     * @inheritDoc
+     */
+    public function subscribe(Plan $plan): Subscription
+    {
+        return tap(
+            $this->subscriptions()->create([
+                'plan_id' => $plan->id,
+                'immutable_plan' => $plan->load(['features'])->toArray()
+            ]),
+            function ($subscription) {
+                event(new SubscriptionCreated($subscription));
+            }
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function unsubscribe(): void
+    {
+        $this->currentSubscription()->cancel();
+    }
+
     /**
      * @inheritDoc
      */
@@ -34,50 +59,6 @@ trait Subscribable
     public function currentPlan(): Plan
     {
         return $this->currentSubscription()->plan;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function changePlan(Plan $newPlan, ChangePlanOptions $options = null): bool
-    {
-        return DB::transaction(function () use ($newPlan, $options) {
-
-            $now = now();
-            $options = $options ?? new ChangePlanOptions(
-                Str::slug($this->name . '-' . $now->getTimestamp()),
-                $now->format('d'),
-                $now
-            );
-
-            $oldSubscription = $this->currentSubscription();
-
-            $currentSubscription = $this->subscriptions()->create([
-                'name' => $options->getSubscriptionName(),
-                'start_at' => $options->getStartAt(),
-                'finish_at' => $options->getFinishAt(),
-                'due_day' => $options->getDueDay(),
-                'plan_id' => $newPlan->id
-            ]);
-    
-            if ($currentSubscription) {
-                $oldSubscription->usages->each(function ($usage) use ($currentSubscription) {
-                    $currentSubscription->usages()->create([
-                        'used' => $usage->used,
-                        'feature_id' => $usage->feature_id,
-                        'metadata' => $usage->metadata
-                    ]);
-                });
-    
-                $oldSubscription->delete();
-    
-                event(new ChangePlan($currentSubscription));
-    
-                return true;
-            }
-    
-            return false;
-        });
     }
 
     /**
@@ -112,6 +93,40 @@ trait Subscribable
         }
 
         return '0';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function consumedUse(string $featureSlug): int
+    {
+        $feature = Feature::whereSlug($featureSlug)->first();
+
+        if ($feature) {
+            $subscription = $this->currentSubscription();
+            
+            $this->ifActiveSubscriptionOrLogicException($subscription);
+
+            if (!$subscription->relationLoaded('usages')) {
+                $subscription->usages()->getEager();
+            }
+
+            foreach ($subscription->usages as $usage) {
+                if ((int)$usage->feature_id === $feature->id) {
+                    return (int) $usage->used;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function remainingUse(string $featureSlug): int
+    {
+        return (int)$this->featureValue($featureSlug) - $this->consumedUse($featureSlug);
     }
 
     /**
@@ -205,40 +220,6 @@ trait Subscribable
     /**
      * @inheritDoc
      */
-    public function consumedUse(string $featureSlug): int
-    {
-        $feature = Feature::whereSlug($featureSlug)->first();
-
-        if ($feature) {
-            $subscription = $this->currentSubscription();
-            
-            $this->ifActiveSubscriptionOrLogicException($subscription);
-
-            if (!$subscription->relationLoaded('usages')) {
-                $subscription->usages()->getEager();
-            }
-
-            foreach ($subscription->usages as $usage) {
-                if ((int)$usage->feature_id === $feature->id) {
-                    return (int) $usage->used;
-                }
-            }
-        }
-
-        return 0;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function remainingUse(string $featureSlug): int
-    {
-        return (int)$this->featureValue($featureSlug) - $this->consumedUse($featureSlug);
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function canUse(string $featureSlug): bool
     {
         $feature = Feature::whereSlug($featureSlug)->first();
@@ -263,7 +244,7 @@ trait Subscribable
     /**
      * @inheritDoc
      */
-    public function removeUse(string $featureSlug)
+    public function cleanUse(string $featureSlug): void
     {
         $feature = Feature::whereSlug($featureSlug)->first();
 
