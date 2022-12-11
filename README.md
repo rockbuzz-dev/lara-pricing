@@ -1,6 +1,6 @@
 # Lara Pricing
 
-Pricing management in development
+Laravel package to manage plan subscriptions with restrictive and limited functionalities.
 
 ## Requirements
 
