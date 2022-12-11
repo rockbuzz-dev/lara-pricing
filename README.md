@@ -188,6 +188,31 @@ dd($account->currentSubscription()->toArray());
 ]
 ```
 
+### You can check if a feature is available in the current subscription.
+
+```php
+use Tests\Models\Account;
+use Rockbuzz\LaraPricing\Models\Plan;
+
+$feature = Feature::create(['name' => 'Feature Name']);
+$plan = Plan::create([
+    'name' => 'Plan Name',
+    'price' => 2990,// in cents
+    'interval' => 'month',
+    'period' => 1
+]);
+$plan->features()->attach([$feature->id => ['value' => PlanFeatureValue::POSITIVE]]);
+
+$account = Account::create();
+$account->subscribe($plan);
+
+dd($account->featureEnabled($feature->slug));
+
+#output
+
+true
+```
+
 ### You can subscribe to a plan with feature limit.
 
 ```php
@@ -251,31 +276,6 @@ dd($account->currentSubscription()->toArray());
   "updated_at" => "2022-12-11T15:08:38.000000Z"
   "deleted_at" => null
 ]
-```
-
-### You can check if a feature is available in the current subscription.
-
-```php
-use Tests\Models\Account;
-use Rockbuzz\LaraPricing\Models\Plan;
-
-$feature = Feature::create(['name' => 'Feature Name']);
-$plan = Plan::create([
-    'name' => 'Plan Name',
-    'price' => 2990,// in cents
-    'interval' => 'month',
-    'period' => 1
-]);
-$plan->features()->attach([$feature->id => ['value' => PlanFeatureValue::POSITIVE]]);
-
-$account = Account::create();
-$account->subscribe($plan);
-
-dd($account->featureEnabled($feature->slug));
-
-#output
-
-true
 ```
 
 ### You can get the usage amount of a feature in the current subscription.
