@@ -736,7 +736,7 @@ class SubscribableTest extends TestCase
         $plan = $this->create(Plan::class);
         $feature = $this->create(Feature::class);
 
-        $subscription = $this->create(Subscription::class, [
+        $this->create(Subscription::class, [
             'finish_at' => now()->subSecond(),
             'plan_id' => $plan->id,
             'subscribable_id' => $subscribable->id,

@@ -257,6 +257,21 @@ trait Subscribable
         }
     }
 
+    public function makeRecurring()
+    {
+        $this->currentSubscription()->makeRecurring();
+    }
+
+    public function cancelRecurrence()
+    {
+        $this->currentSubscription()->cancelRecurrence();
+    }
+
+    public function isRecurrent()
+    {
+        return $this->currentSubscription()->isRecurrent();
+    }
+
     /**
      * @param Subscription $subscription
      * @param Feature $feature

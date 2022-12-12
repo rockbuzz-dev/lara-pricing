@@ -442,9 +442,41 @@ $plan->features()->attach([$feature->id => ['value' => '10']]);
 $account = Account::create();
 $account->subscribe($plan);
 
-dd($account->cleanUse($feature->slug));
+$account->cleanUse($feature->slug);
 ```
 
+### You can manage recurrences.
+
+```php
+use Tests\Models\Account;
+use Rockbuzz\LaraPricing\Models\Plan;
+
+$plan = Plan::create([
+    'name' => 'Plan Name',
+    'price' => 2990,// in cents
+    'interval' => 'month',
+    'period' => 1
+]);
+
+$account = Account::create();
+
+# by default when signing the recurrence is on
+$account->subscribe($plan);
+
+dump($account->isRecurrent());
+
+# output
+
+true
+
+$account->cancelRecurrence();
+
+dd($account->isRecurrent());
+
+# output
+
+false
+```
 
 ## License
 

@@ -192,10 +192,13 @@ class SubscriptionTest extends TestCase
     {
         Event::fake([SubscriptionMakeRecurring::class]);
 
-        $finish =  now()->subMonths(3);
+        $now = now();
+        $finish = clone $now;
+
+        $finish->addMonths(3);
 
         $subscription = $this->create(Subscription::class, [
-            'start_at' => now()->subMonth(),
+            'start_at' => $now,
             'finish_at' => $finish,
             'canceled_at' => null
         ]);
