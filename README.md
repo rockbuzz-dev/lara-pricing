@@ -52,6 +52,7 @@ $plan = Plan::create([
 $account = Account::create();
 $account->subscribe($plan);
 ```
+> when subscribing the event Rockbuzz\LaraPricing\Events\SubscriptionCreated is dispatched
 
 ### You can unsubscribe the current subscription.
 
@@ -71,6 +72,8 @@ $account->subscribe($plan);
 
 $account->unsubscribe();
 ```
+
+> when unsubscribing the event Rockbuzz\LaraPricing\Events\SubscriptionCanceled is dispatched
 
 ### You can take the current subscription.
 
@@ -477,6 +480,7 @@ dd($account->isRecurrent());
 
 false
 ```
+> When canceling a recurrence event Rockbuzz\LaraPricing\Events\SubscriptionCancelRecurrence is dispatched.
 
 ## License
 
