@@ -445,7 +445,7 @@ $account->subscribe($plan);
 $account->cleanUse($feature->slug);
 ```
 
-### You can manage recurrences.
+### You can manage recurrences of the current subscription.
 
 ```php
 use Tests\Models\Account;
